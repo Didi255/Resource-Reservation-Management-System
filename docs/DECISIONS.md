@@ -29,3 +29,11 @@
 - **Chosen:** A + B.
 - **Why:** The exclusion constraint (`EXCLUDE USING gist (resource_id WITH =, tstzrange(start, end) WITH &&) WHERE status = 'approved'`) makes an overlapping approved pair unrepresentable, so the guarantee holds even if application code is wrong. The row lock serializes approvals per resource so the pre-check is accurate and the common conflict path returns a clear 409 instead of relying on catching an exception. A constraint violation (`23P01`) is still caught and mapped to 409 as a backstop.
 - **Trade-off accepted:** More to explain than a plain check (GiST index, `btree_gist` extension, range types, lock ordering). Approvals on the same resource are serialized — fine at this scale. B is not needed for correctness, only for clearer behaviour.
+
+
+## D5: Raw SQL with the `pg` driver and plain `.sql` migrations
+- **Date:** 2026-10-12
+- **Options considered:** (A) raw SQL with `pg` / (B) query builder (Drizzle, Kysely) / (C) ORM (Prisma).
+- **Chosen:** A — simple.
+- **Why:** The data layer is small (about five tables), and what is being judged — constraints, transactions, locking — is visible only in SQL I wrote myself. Exclusion constraints and range types are awkward or unsupported in ORMs, so a tool would end up bypassed anyway. Keeping SQL plain keeps the project explainable.
+- **Trade-off accepted:** More typing, no generated result types (typed by hand at the repo boundary), and a small migration runner to maintain.
