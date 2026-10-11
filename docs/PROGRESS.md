@@ -3,8 +3,8 @@
 ## CURRENT STATE
 
 - **Stage:** Setup — before any code
-- **Last done:** decisions D1-D3 made; `docs/PROBLEM.md` written
-- **Next action:** decision #5 (how overlaps are prevented) and #4 (data access layer), then Next.js scaffold on a feature branch
+- **Last done:** decisions D1-D4; `docs/PROBLEM.md` written
+- **Next action:** decision #4 (data access: raw SQL vs query builder vs ORM), then #3 (Postgres in Docker vs local), then Next.js scaffold on a feature branch
 - **Blockers:** none
 - **Deadline:** Thu 15 Oct 2026, 11:59 PM SLT
 

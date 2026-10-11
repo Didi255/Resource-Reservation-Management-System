@@ -150,6 +150,7 @@ Every decision is discussed with me first. The full reasoning goes in
 | 0 | Stack | Next.js App Router + TS + PostgreSQL | Mandated by the brief |
 | 1 | AI.md visibility | Committed, under `docs/` | Organized, backed up, and AI use is explicitly allowed by the brief |
 | 2 | Problem interpretation & scope | See `docs/PROBLEM.md` (D3) | Small provably-correct core + approval workflow; double-booking impossible by DB guarantee |
+| 5 | Overlap prevention | Exclusion constraint + row lock in a transaction (D4) | DB makes double booking unrepresentable; lock gives accurate pre-check and clean 409 |
 | 11 | Branching | Feature branches + PR into `main` for code; docs-only changes straight to `main` | Reviewable units, `main` always works; PR ceremony isn't worth it for docs |
 
 ### ❓ Open — discuss in roughly this order
@@ -158,7 +159,6 @@ Every decision is discussed with me first. The full reasoning goes in
 |---|---|---|
 | 3 | Postgres in Docker vs my local install | Docker = reviewer can reproduce with one command; local = nothing new to learn. |
 | 4 | Data access: raw SQL (`pg` / `postgres.js`) vs query builder (Drizzle / Kysely) vs ORM (Prisma) | Big one — affects how the double-booking guard is written and how well I can explain it. |
-| 5 | How overlaps are prevented | App check only? DB constraint? Both? Concurrency-safe? (Likely the project's centrepiece.) |
 | 6 | Auth: none / simple custom / Auth.js | Roles matter if admins manage resources and members book them. |
 | 7 | Mutations: Server Actions vs Route Handlers (API routes) | |
 | 8 | Validation library (e.g. Zod) or hand-written | Must validate on the server regardless. |
