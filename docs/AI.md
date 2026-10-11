@@ -149,13 +149,13 @@ Every decision is discussed with me first. The full reasoning goes in
 |---|---|---|---|
 | 0 | Stack | Next.js App Router + TS + PostgreSQL | Mandated by the brief |
 | 1 | AI.md visibility | Committed, under `docs/` | Organized, backed up, and AI use is explicitly allowed by the brief |
+| 2 | Problem interpretation & scope | See `docs/PROBLEM.md` (D3) | Small provably-correct core + approval workflow; double-booking impossible by DB guarantee |
 | 11 | Branching | Feature branches + PR into `main` for code; docs-only changes straight to `main` | Reviewable units, `main` always works; PR ceremony isn't worth it for docs |
 
 ### ❓ Open — discuss in roughly this order
 
 | # | Decision | Notes |
 |---|---|---|
-| 2 | **Problem interpretation** — who uses it, what roles, what a "resource" and "reservation" are, what's in/out of scope | Everything else depends on this. Write it before any code. |
 | 3 | Postgres in Docker vs my local install | Docker = reviewer can reproduce with one command; local = nothing new to learn. |
 | 4 | Data access: raw SQL (`pg` / `postgres.js`) vs query builder (Drizzle / Kysely) vs ORM (Prisma) | Big one — affects how the double-booking guard is written and how well I can explain it. |
 | 5 | How overlaps are prevented | App check only? DB constraint? Both? Concurrency-safe? (Likely the project's centrepiece.) |

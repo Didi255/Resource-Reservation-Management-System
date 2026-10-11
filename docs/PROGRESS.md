@@ -3,8 +3,8 @@
 ## CURRENT STATE
 
 - **Stage:** Setup — before any code
-- **Last done:** repo connected to GitHub (branch `main`); AI.md, PROGRESS.md moved to `docs/`; D1 written in `docs/DECISIONS.md`; decision #1 done
-- **Next action:** make the first two commits (docs), then decision #2 — problem interpretation
+- **Last done:** decisions D1-D3 made; `docs/PROBLEM.md` written
+- **Next action:** decision #5 (how overlaps are prevented) and #4 (data access layer), then Next.js scaffold on a feature branch
 - **Blockers:** none
 - **Deadline:** Thu 15 Oct 2026, 11:59 PM SLT
 
