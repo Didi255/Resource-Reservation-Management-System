@@ -21,3 +21,11 @@
 - **Chosen:** (b). Full reasoning and the scope tiers are in `docs/PROBLEM.md`.
 - **Why:** The brief rewards prioritization and reliability over features, and there are ~3.5 days. The one thing the business cannot tolerate is a double booking, so that is guaranteed by the database and everything else is sized around it. Approval stays because it is the "human in the loop" the organization wants.
 - **Trade-off accepted:** No quantity-per-resource (units are separate resources in a category), no auto-allocation, no email, no recurring bookings. These are named in the README as known limitations rather than half-built.
+
+
+## D4: Prevent double booking with an exclusion constraint (A) plus a row lock in the transaction (B)
+- **Date:** 2026-10-12
+- **Options considered:** (A) exclusion constraint / (B) `SELECT … FOR UPDATE` on the resource, then check, then write / (C) `SERIALIZABLE` isolation with retry. Also considered and rejected: "check then insert in a transaction" alone — under Postgres's default `READ COMMITTED` two concurrent transactions both see "no overlap" and both commit.
+- **Chosen:** A + B.
+- **Why:** The exclusion constraint (`EXCLUDE USING gist (resource_id WITH =, tstzrange(start, end) WITH &&) WHERE status = 'approved'`) makes an overlapping approved pair unrepresentable, so the guarantee holds even if application code is wrong. The row lock serializes approvals per resource so the pre-check is accurate and the common conflict path returns a clear 409 instead of relying on catching an exception. A constraint violation (`23P01`) is still caught and mapped to 409 as a backstop.
+- **Trade-off accepted:** More to explain than a plain check (GiST index, `btree_gist` extension, range types, lock ordering). Approvals on the same resource are serialized — fine at this scale. B is not needed for correctness, only for clearer behaviour.
