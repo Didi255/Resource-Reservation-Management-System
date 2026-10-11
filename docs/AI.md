@@ -153,6 +153,7 @@ Every decision is discussed with me first. The full reasoning goes in
 | 5 | Overlap prevention | Exclusion constraint + row lock in a transaction (D4) | DB makes double booking unrepresentable; lock gives accurate pre-check and clean 409 |
 | 4 | Data access | Raw SQL with `pg`, plain `.sql` migrations (D5) | Small schema; constraints/locking visible and explainable; simple |
 | 3 | Database hosting | Docker, `postgres:16` pinned, host port 5433 (D6) | One-command reproducible setup for reviewers |
+| 9 | Styling | Tailwind CSS (D7) | Fast, consistent, full control of the look |
 | 11 | Branching | Feature branches + PR into `main` for code; docs-only changes straight to `main` | Reviewable units, `main` always works; PR ceremony isn't worth it for docs |
 
 ### ❓ Open — discuss in roughly this order
@@ -162,7 +163,6 @@ Every decision is discussed with me first. The full reasoning goes in
 | 6 | Auth: none / simple custom / Auth.js | Roles matter if admins manage resources and members book them. |
 | 7 | Mutations: Server Actions vs Route Handlers (API routes) | |
 | 8 | Validation library (e.g. Zod) or hand-written | Must validate on the server regardless. |
-| 9 | Styling: Tailwind / CSS Modules / component library | UI is my call. |
 | 10 | Time zones: how times are stored and displayed | `timestamptz` vs `timestamp` — a classic bug source. |
 | 12 | Testing: what's worth testing in 3 days | At minimum, prove double-booking is impossible. |
 | 13 | ER diagram tool (dbdiagram.io / draw.io / other) | Must be a shareable link. |

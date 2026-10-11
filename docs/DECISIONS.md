@@ -45,3 +45,11 @@
 - **Chosen:** Docker Compose, image `postgres:16`, host port 5433 mapped to container 5432.
 - **Why:** One command gives a reviewer the identical database, which is what the README requirement asks for. Pinning the major version stops the environment from drifting. Version 16 is widely deployed and supports everything used (exclusion constraints, range types, `btree_gist`). Port 5433 avoids a clash with a local Postgres on 5432.
 - **Trade-off accepted:** Docker Desktop must be running, and the developer's local Postgres 18 differs from the container (acceptable: the app only uses features available in 16).
+
+
+## D7: Tailwind CSS for styling
+- **Date:** 2026-10-12
+- **Options considered:** Tailwind / CSS Modules / component library (shadcn/ui, MUI).
+- **Chosen:** Tailwind CSS.
+- **Why:** Fast to style consistently inside a 3-day window, and it keeps the look fully under my control (a component library would impose its own). It integrates with Next.js through the standard scaffold.
+- **Trade-off accepted:** Utility classes make markup noisier, and there is a small learning cost compared with plain CSS.
