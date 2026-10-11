@@ -3,8 +3,8 @@
 ## CURRENT STATE
 
 - **Stage:** Setup — before any code
-- **Last done:** decisions D1-D5; `docs/PROBLEM.md` written
-- **Next action:** decision #3 (Postgres in Docker vs local), then Next.js scaffold on a feature branch
+- **Last done:** decisions D1-D6 (foundations decided)
+- **Next action:** first feature branch `chore/scaffold` — Next.js scaffold, then docker-compose + first migration
 - **Blockers:** none
 - **Deadline:** Thu 15 Oct 2026, 11:59 PM SLT
 

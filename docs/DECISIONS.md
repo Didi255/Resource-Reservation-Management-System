@@ -37,3 +37,11 @@
 - **Chosen:** A — simple.
 - **Why:** The data layer is small (about five tables), and what is being judged — constraints, transactions, locking — is visible only in SQL I wrote myself. Exclusion constraints and range types are awkward or unsupported in ORMs, so a tool would end up bypassed anyway. Keeping SQL plain keeps the project explainable.
 - **Trade-off accepted:** More typing, no generated result types (typed by hand at the repo boundary), and a small migration runner to maintain.
+
+
+## D6: PostgreSQL in Docker, pinned to major version 16, host port 5433
+- **Date:** 2026-10-12
+- **Options considered:** Docker / local Postgres install. Versions considered: 16, 18 (matches the developer's local install), `latest`.
+- **Chosen:** Docker Compose, image `postgres:16`, host port 5433 mapped to container 5432.
+- **Why:** One command gives a reviewer the identical database, which is what the README requirement asks for. Pinning the major version stops the environment from drifting. Version 16 is widely deployed and supports everything used (exclusion constraints, range types, `btree_gist`). Port 5433 avoids a clash with a local Postgres on 5432.
+- **Trade-off accepted:** Docker Desktop must be running, and the developer's local Postgres 18 differs from the container (acceptable: the app only uses features available in 16).
