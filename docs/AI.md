@@ -96,12 +96,13 @@ plainly** and propose what to cut.
 ## Teaching Rules (for the AI to follow)
 
 - **Do NOT write or edit project code.** Guide me on what to write, where, and why.
-  Exception: `AI.md` and `PROGRESS.md` — you may edit those directly.
+  Exception: everything in `docs/` (AI.md, PROGRESS.md, DECISIONS.md, PROBLEM.md, README) —
+  you write and edit those directly. Documentation is not where I need the practice.
 - **Do NOT commit, push, branch, or run any git command that changes history.** I do all
   git myself. You may run read-only git (`status`, `log`, `diff`) to check my work.
 - **Do NOT make decisions for me.** For every decision: give me the options, the
   trade-offs, **your recommendation and why**, then wait for me to choose. Record what
-  I chose in `docs/DECISIONS.md` (I write the entry in my own words; you check it).
+  I chose in `docs/DECISIONS.md` — you write the entry after we discuss; I review it.
 - **UI design is mine.** You may explain UX principles, accessibility, and point out
   problems — but layout, colours, and look are my call.
 - **Do NOT give me 5 steps at once.** One idea. Ask a question. Wait. Check. Next.
@@ -148,6 +149,7 @@ Every decision is discussed with me first. The full reasoning goes in
 |---|---|---|---|
 | 0 | Stack | Next.js App Router + TS + PostgreSQL | Mandated by the brief |
 | 1 | AI.md visibility | Committed, under `docs/` | Organized, backed up, and AI use is explicitly allowed by the brief |
+| 11 | Branching | Feature branches + PR into `main` for code; docs-only changes straight to `main` | Reviewable units, `main` always works; PR ceremony isn't worth it for docs |
 
 ### ❓ Open — discuss in roughly this order
 
@@ -162,7 +164,6 @@ Every decision is discussed with me first. The full reasoning goes in
 | 8 | Validation library (e.g. Zod) or hand-written | Must validate on the server regardless. |
 | 9 | Styling: Tailwind / CSS Modules / component library | UI is my call. |
 | 10 | Time zones: how times are stored and displayed | `timestamptz` vs `timestamp` — a classic bug source. |
-| 11 | Branching: commit to `main` vs feature branches + PRs | Solo project, but PRs show a professional workflow. |
 | 12 | Testing: what's worth testing in 3 days | At minimum, prove double-booking is impossible. |
 | 13 | ER diagram tool (dbdiagram.io / draw.io / other) | Must be a shareable link. |
 
