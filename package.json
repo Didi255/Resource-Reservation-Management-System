@@ -9,7 +9,7 @@
     "lint": "eslint",
     "migrate": "node --env-file=.env scripts/migrate.mjs",
     "seed": "node --env-file=.env scripts/seed.mjs",
-    "test:concurrency": "node scripts/concurrency-test.mjs"
+    "test:concurrency": "node --env-file=.env scripts/concurrency-test.mjs"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",

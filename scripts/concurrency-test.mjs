@@ -4,6 +4,8 @@
 //   npm run test:concurrency            (dev server must be running)
 //   N=50 RESOURCE_ID=4 npm run test:concurrency
 
+import pg from "pg";
+
 const BASE = process.env.BASE_URL ?? "http://localhost:3000";
 const N = Number(process.env.N ?? 50);
 const RESOURCE_ID = Number(process.env.RESOURCE_ID ?? 3);
@@ -80,6 +82,35 @@ const approvedInSlot = list.json.reservations.filter((r) => ids.includes(r.id)).
 console.log("\nHTTP status counts:", tally);
 console.log(`Approved rows in the database for this slot: ${approvedInSlot}`);
 console.log(`Elapsed: ${elapsed} ms\n`);
+
+// Remove this run's rows so the admin approvals list is not buried in test data.
+// Set KEEP=1 to leave them in place for inspection.
+async function cleanup() {
+    if (process.env.KEEP === "1") {
+        console.log("KEEP=1: leaving the test rows in place.");
+        return;
+    }
+    if (!process.env.DB_HOST) {
+        console.warn("DB_* variables not set, so the test rows were not cleaned up.");
+        return;
+    }
+    const client = new pg.Client({
+        host: process.env.DB_HOST,
+        port: Number(process.env.DB_PORT),
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,
+        database: process.env.DB_NAME,
+    });
+    await client.connect();
+    try {
+        await client.query("DELETE FROM reservation_events WHERE reservation_id = ANY($1)", [ids]);
+        const removed = await client.query("DELETE FROM reservations WHERE id = ANY($1)", [ids]);
+        console.log(`Cleaned up ${removed.rowCount} test reservations.`);
+    } finally {
+        await client.end();
+    }
+}
+await cleanup();
 
 const wins = tally[200] ?? 0;
 const serverErrors = Object.keys(tally).filter((s) => Number(s) >= 500).length;

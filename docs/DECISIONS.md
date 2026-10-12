@@ -114,7 +114,7 @@
 ## D15: Teams deferred to a should-have after the core flow
 - **Date:** 2026-10-12
 - **Options considered:** leave out / `teams` table with a nullable `users.team_id`, built after the core flow / many-to-many users-teams with "booking as" a team now.
-- **Chosen:** `teams` plus `users.team_id` as migration 007 after the core booking flow works; until then a team booking is a member booking on the team's behalf.
+- **Chosen:** `teams` plus `users.team_id` as migration 008 (007 is now used for floor-plan positions, D21) after the core booking flow works; until then a team booking is a member booking on the team's behalf.
 - **Why:** The brief says resources are used by "individuals and teams", so usage by team is worth showing. The change is additive (one table, one nullable column), so deciding later costs no rework, and the core flow protects against the three stated problems.
 - **Trade-off accepted:** if time runs out it stays a documented limitation. Members belong to at most one team.
 
@@ -133,6 +133,7 @@
 - **Chosen:** cool white background (#F4F7FE), white surfaces, deep navy text, one electric blue (#2563FF) as the brand, cyan (#38BDF8) only for focus and active-pin glow, and colour otherwise reserved for availability (green free, red booked, amber pending, grey maintenance). Inter typeface. Light theme only. A sidebar on desktop that becomes a bottom tab bar on phones.
 - **Why:** The tool is used mostly by members on phones, so the layout is designed for narrow screens first. Colour carries meaning (availability), so the brand colour stays quiet. Colours are tokens in `globals.css`, so changing the brand is a one-line edit.
 - **Trade-off accepted:** no dark mode. Blue is a safe, conventional choice over a more distinctive purple.
+- **Update (2026-10-12):** typeface, palette and glow rules were refined in D19. Light theme, one blue accent, colour-for-meaning and the sidebar/tab-bar split still stand.
 
 
 ## D18: Floor plan is an illustration with positioned pins
@@ -141,3 +142,28 @@
 - **Chosen:** one generated isometric illustration as a backdrop, with a pin per spatial resource at `plan_x`, `plan_y` (percent). The pin colour shows availability at the selected time; clicking opens the booking panel. Resources without a position (equipment, vehicles, parking) are shown as cards with the same status colours. One generated illustration per category is used as card artwork.
 - **Why:** The brief's core pain is uncertainty about availability, and a plan that changes colour with time answers that visually. Pins tolerate imperfect artwork, scale with the window, and need only two numeric columns. Resources not placed on the plan still work.
 - **Trade-off accepted:** a single floor, artwork that depends on image generation (time-boxed to 30 minutes, with a flat SVG plan as fallback), and a plan that is secondary to the list on phones.
+
+
+
+## D19: UI visual system refined: Geist, neutral palette, pastel status, Phosphor icons
+- **Date:** 2026-10-12
+- **Options considered:** keep D17 as written (Inter, cool-blue page, cyan glow) / a warm editorial monochrome / a neutral slate base with a single blue accent.
+- **Chosen:** Geist and Geist Mono; neutral slate surfaces (page #F8FAFC, ink #0F172A, muted #64748B, border #E2E8F0); one blue accent (#2563EB); availability shown with soft pastel fills and a darker ink for the text; Phosphor icons; no glows or gradients except a blue ring on the selected category card. Sidebar from the lg breakpoint, bottom tab bar below it.
+- **Why:** Interface text is mostly small numbers and labels, so a UI face with a matching mono for counts and times reads better than Inter. Pastel fills with dark ink keep status colours accessible and calm; the saturated colours are kept for pins. A single accent keeps blue meaning "action or selected".
+- **Trade-off accepted:** supersedes the typeface, palette and cyan-glow parts of D17. Deliberately no perpetual or looping animation: this is a tool people scan quickly, so motion stays at quiet entrances and press feedback.
+
+
+## D20: Availability is computed in SQL per time window and exposes state only
+- **Date:** 2026-10-12
+- **Options considered:** return every reservation and compute in the browser / one endpoint that returns a state per resource for a window.
+- **Chosen:** `GET /api/availability?start&end` returns each non-retired resource with one state (maintenance, booked, pending, free), decided in a single query using the same half-open overlap rule as the exclusion constraint.
+- **Why:** The browser needs one answer per resource, not other members' bookings. Doing it in the database avoids shipping reservation rows to every member and keeps the overlap rule in one place.
+- **Trade-off accepted:** it reports that something is booked but not by whom or for how long; a day timeline for the booking panel will need a second, narrower endpoint.
+
+
+## D21: Floor-plan position is two nullable percentage columns on resources
+- **Date:** 2026-10-12
+- **Options considered:** a separate `resource_positions` table / a JSON column / two columns on `resources`.
+- **Chosen:** migration 007 adds `plan_x` and `plan_y` (SMALLINT, 0 to 100) to `resources`, with a check that both are set or both are empty.
+- **Why:** Each resource has at most one position on one plan, so a second table adds a join for no benefit. Percentages stay valid at any image size, and the CHECK constraints stop half-placed pins at the database.
+- **Trade-off accepted:** one floor only; a multi-floor plan would need a `floor` column or a table.
