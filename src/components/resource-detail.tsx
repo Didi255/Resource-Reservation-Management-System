@@ -15,17 +15,19 @@ export function ResourceDetail({
     windowLabel,
     range,
     onBooked,
+    emptyHint = "Select a space on the floor plan to view details.",
 }: {
     space: SpaceRow | null;
     windowLabel: string | null;
     range: { start: string; end: string } | null;
     onBooked: () => void;
+    emptyHint?: string;
 }) {
     if (!space) {
         return (
             <aside className="flex min-h-48 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-line bg-surface p-6 text-center">
                 <CursorClick size={24} className="text-muted" aria-hidden />
-                <p className="text-sm text-muted">Select a space on the floor plan to view details.</p>
+                <p className="text-sm text-muted">{emptyHint}</p>
             </aside>
         );
     }

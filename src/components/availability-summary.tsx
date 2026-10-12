@@ -7,7 +7,7 @@ import {
 
 const ORDER: Availability[] = ["free", "pending", "booked", "maintenance"];
 
-/** The selected window and one tile per status. Used on the Resources page. */
+/** The selected window and one tile per status, in a 2 x 2 grid that fits a side column. */
 export function AvailabilitySummary({
     counts,
     windowLabel,
@@ -16,24 +16,22 @@ export function AvailabilitySummary({
     windowLabel: string | null;
 }) {
     return (
-        <section aria-label="Availability summary" className="rounded-xl border border-line bg-surface p-4 sm:p-5">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-xs font-medium uppercase tracking-wider text-muted">Selected window</p>
-                {windowLabel && (
-                    <p className="flex items-center gap-2 text-sm font-medium">
-                        <CalendarBlank size={16} weight="bold" className="shrink-0 text-primary" aria-hidden />
-                        {windowLabel}
-                    </p>
-                )}
-            </div>
+        <section aria-label="Availability summary" className="rounded-xl border border-line bg-surface p-4">
+            <p className="text-xs font-medium uppercase tracking-wider text-muted">Selected window</p>
+            {windowLabel && (
+                <p className="mt-1 flex items-start gap-2 text-sm font-medium">
+                    <CalendarBlank size={16} weight="bold" className="mt-0.5 shrink-0 text-primary" aria-hidden />
+                    {windowLabel}
+                </p>
+            )}
 
-            <dl className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <dl className="mt-3 grid grid-cols-2 gap-2">
                 {ORDER.map((state) => (
-                    <div key={state} className={`rounded-lg px-4 py-3 ${AVAILABILITY_PILL[state]}`}>
-                        <dd className="font-mono text-3xl font-semibold leading-none tracking-tight">
+                    <div key={state} className={`rounded-lg px-3 py-2.5 ${AVAILABILITY_PILL[state]}`}>
+                        <dd className="font-mono text-2xl font-semibold leading-none tracking-tight">
                             {counts[state]}
                         </dd>
-                        <dt className="mt-2 text-sm font-medium">{AVAILABILITY_LABEL[state]}</dt>
+                        <dt className="mt-1.5 text-xs font-medium">{AVAILABILITY_LABEL[state]}</dt>
                     </div>
                 ))}
             </dl>
