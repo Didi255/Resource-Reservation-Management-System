@@ -125,3 +125,19 @@
 - **Chosen:** Zod.
 - **Why:** About eight routes accept input and the client cannot be trusted. One declared schema per route validates the body and produces the TypeScript type from the same definition, with fewer holes than repeated `if` chains.
 - **Trade-off accepted:** one more dependency and a small amount to learn.
+
+
+## D17: UI direction: light, blue and white, mobile-first, Inter
+- **Date:** 2026-10-12
+- **Options considered:** warm cream + black (SpaceIQ-style) / cool blue and white / purple accent; top pill tabs / left sidebar.
+- **Chosen:** cool white background (#F4F7FE), white surfaces, deep navy text, one electric blue (#2563FF) as the brand, cyan (#38BDF8) only for focus and active-pin glow, and colour otherwise reserved for availability (green free, red booked, amber pending, grey maintenance). Inter typeface. Light theme only. A sidebar on desktop that becomes a bottom tab bar on phones.
+- **Why:** The tool is used mostly by members on phones, so the layout is designed for narrow screens first. Colour carries meaning (availability), so the brand colour stays quiet. Colours are tokens in `globals.css`, so changing the brand is a one-line edit.
+- **Trade-off accepted:** no dark mode. Blue is a safe, conventional choice over a more distinctive purple.
+
+
+## D18: Floor plan is an illustration with positioned pins
+- **Date:** 2026-10-12
+- **Options considered:** schematic SVG blocks / one isometric illustration with clickable pins / hand-aligned hotspots over a real plan / 3D per-room models.
+- **Chosen:** one generated isometric illustration as a backdrop, with a pin per spatial resource at `plan_x`, `plan_y` (percent). The pin colour shows availability at the selected time; clicking opens the booking panel. Resources without a position (equipment, vehicles, parking) are shown as cards with the same status colours. One generated illustration per category is used as card artwork.
+- **Why:** The brief's core pain is uncertainty about availability, and a plan that changes colour with time answers that visually. Pins tolerate imperfect artwork, scale with the window, and need only two numeric columns. Resources not placed on the plan still work.
+- **Trade-off accepted:** a single floor, artwork that depends on image generation (time-boxed to 30 minutes, with a flat SVG plan as fallback), and a plan that is secondary to the list on phones.
