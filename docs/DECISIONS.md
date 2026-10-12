@@ -109,3 +109,19 @@
 - **Chosen:** C.
 - **Why:** The role must be re-checked in the database on each request anyway, so a session lookup costs almost nothing extra. C gives real revocation (logout ends the session; deactivating a user can delete theirs) and is simpler to explain than signing and JWT claims. Passwords are bcrypt hashes, and only a SHA-256 hash of the session token is stored, so a leaked table cannot be used to log in. The cookie is `HttpOnly` and `SameSite=Lax`.
 - **Trade-off accepted:** one more table and one query per request. Known limitations, stated in the README: no rate limiting, no email verification, no password reset.
+
+
+## D15: Teams deferred to a should-have after the core flow
+- **Date:** 2026-10-12
+- **Options considered:** leave out / `teams` table with a nullable `users.team_id`, built after the core flow / many-to-many users-teams with "booking as" a team now.
+- **Chosen:** `teams` plus `users.team_id` as migration 007 after the core booking flow works; until then a team booking is a member booking on the team's behalf.
+- **Why:** The brief says resources are used by "individuals and teams", so usage by team is worth showing. The change is additive (one table, one nullable column), so deciding later costs no rework, and the core flow protects against the three stated problems.
+- **Trade-off accepted:** if time runs out it stays a documented limitation. Members belong to at most one team.
+
+
+## D16: Zod for request validation
+- **Date:** 2026-10-12
+- **Options considered:** hand-written checks / Zod.
+- **Chosen:** Zod.
+- **Why:** About eight routes accept input and the client cannot be trusted. One declared schema per route validates the body and produces the TypeScript type from the same definition, with fewer holes than repeated `if` chains.
+- **Trade-off accepted:** one more dependency and a small amount to learn.

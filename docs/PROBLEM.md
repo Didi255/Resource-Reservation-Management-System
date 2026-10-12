@@ -52,6 +52,9 @@ database, not only by application code.
 10. Filter/search resources by category and by "free during this time"
 11. Pending-conflict warning for admin (other requests competing for the same slot)
 
+### Should have, added after reading the brief again
+- **Teams (D15):** the scenario says resources are used by "individuals and teams". A user may belong to one team; the admin approval list and a usage-by-team report show it. Built after the core flow works.
+
 ### Could have (only with time left)
 12. Category-based access (some member groups can only book some categories)
 
