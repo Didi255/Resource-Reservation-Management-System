@@ -8,15 +8,22 @@ export function WindowPicker({
     value,
     onChange,
     invalid,
+    stacked = false,
 }: {
     value: TimeWindow;
     onChange: (next: TimeWindow) => void;
     invalid: boolean;
+    /** At lg and up, put the date on its own row so the panel fits a narrow column. */
+    stacked?: boolean;
 }) {
     return (
         <div>
-            <div className="grid grid-cols-2 gap-3 rounded-xl border border-line bg-surface p-4 sm:max-w-xl sm:grid-cols-[1.4fr_1fr_1fr]">
-                <label className="col-span-2 sm:col-span-1">
+            <div
+                className={`grid grid-cols-2 gap-3 rounded-xl border border-line bg-surface p-4 sm:grid-cols-[1.4fr_1fr_1fr] ${
+                    stacked ? "lg:grid-cols-2" : "sm:max-w-xl"
+                }`}
+            >
+                <label className={`col-span-2 sm:col-span-1 ${stacked ? "lg:col-span-2" : ""}`}>
                     <span className="mb-1.5 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted">
                         <CalendarBlank size={14} weight="bold" className="text-primary" aria-hidden />
                         Date
