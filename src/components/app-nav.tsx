@@ -2,7 +2,9 @@
 
 import {
     CalendarBlank,
+    ChartBar,
     CheckCircle,
+    GearSix,
     MapTrifold,
     SidebarSimple,
     SignOut,
@@ -12,13 +14,19 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
-export type NavItem = { href: string; label: string; icon: "plan" | "list" | "bookings" | "approvals" };
+export type NavItem = {
+    href: string;
+    label: string;
+    icon: "plan" | "list" | "bookings" | "approvals" | "manage" | "reports";
+};
 
 const ICONS: Record<NavItem["icon"], Icon> = {
     plan: MapTrifold,
     list: SquaresFour,
     bookings: CalendarBlank,
     approvals: CheckCircle,
+    manage: GearSix,
+    reports: ChartBar,
 };
 
 export function AppNav({

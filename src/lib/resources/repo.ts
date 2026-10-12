@@ -29,6 +29,11 @@ export async function listResources(): Promise<Resource[]> {
     return result.rows;
 }
 
+export async function listCategories(): Promise<{ id: number; name: string }[]> {
+    const result = await pool.query("SELECT id, name FROM categories ORDER BY name");
+    return result.rows;
+}
+
 export async function getResource(id: number): Promise<Resource | null> {
     const result = await pool.query(`${SELECT_RESOURCE} WHERE r.id = $1`, [id]);
     return result.rows[0] ?? null;
@@ -39,12 +44,21 @@ export async function createResource(input: {
     name: string;
     location: string;
     description?: string;
+    planX?: number | null;
+    planY?: number | null;
 }): Promise<Resource> {
     const result = await pool.query(
-        `INSERT INTO resources (category_id, name, location, description)
-         VALUES ($1, $2, $3, $4)
+        `INSERT INTO resources (category_id, name, location, description, plan_x, plan_y)
+         VALUES ($1, $2, $3, $4, $5, $6)
          RETURNING id`,
-        [input.categoryId, input.name, input.location, input.description ?? null]
+        [
+            input.categoryId,
+            input.name,
+            input.location,
+            input.description ?? null,
+            input.planX ?? null,
+            input.planY ?? null,
+        ]
     );
     return (await getResource(result.rows[0].id)) as Resource;
 }
@@ -57,15 +71,22 @@ export async function updateResource(
         description?: string;
         status?: string;
         conditionNotes?: string;
+        planX?: number | null;
+        planY?: number | null;
     }
 ): Promise<Resource | null> {
+    // COALESCE cannot tell "leave it" from "set it to null", so the position has its own flag.
+    const planGiven = input.planX !== undefined;
+
     const result = await pool.query(
         `UPDATE resources
             SET name            = COALESCE($2, name),
                 location        = COALESCE($3, location),
                 description     = COALESCE($4, description),
                 status          = COALESCE($5, status),
-                condition_notes = COALESCE($6, condition_notes)
+                condition_notes = COALESCE($6, condition_notes),
+                plan_x          = CASE WHEN $7::boolean THEN $8::smallint ELSE plan_x END,
+                plan_y          = CASE WHEN $7::boolean THEN $9::smallint ELSE plan_y END
           WHERE id = $1
           RETURNING id`,
         [
@@ -75,6 +96,9 @@ export async function updateResource(
             input.description ?? null,
             input.status ?? null,
             input.conditionNotes ?? null,
+            planGiven,
+            input.planX ?? null,
+            input.planY ?? null,
         ]
     );
     if (result.rowCount === 0) return null;
