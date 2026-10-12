@@ -22,7 +22,11 @@ async function Shell({ children }: { children: React.ReactNode }) {
         { href: "/bookings", label: "My bookings", icon: "bookings" },
         // the link is only a convenience: the page and the API both enforce the admin role
         ...(user.role === "admin"
-            ? [{ href: "/admin/approvals", label: "Approvals", icon: "approvals" as const }]
+            ? [
+                  { href: "/admin/approvals", label: "Approvals", icon: "approvals" as const },
+                  { href: "/admin/resources", label: "Manage resources", icon: "manage" as const },
+                  { href: "/admin/reports", label: "Reports", icon: "reports" as const },
+              ]
             : []),
     ];
 
