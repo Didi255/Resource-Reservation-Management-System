@@ -1,26 +1,31 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/*
+ * Design tokens (D17). Light theme only.
+ * Tailwind turns each --color-* into utilities: bg-surface, text-ink, border-line, ...
+ * Colour is reserved for meaning: blue = action, green/red/amber/grey = availability.
+ */
+@theme {
+  --color-background: #f4f7fe;
+  --color-surface: #ffffff;
+  --color-ink: #0b1b3a;
+  --color-muted: #5b6b8c;
+  --color-line: #e1e8f5;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-primary: #2563ff;
+  --color-primary-hover: #1d4fd8;
+  --color-glow: #38bdf8;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-free: #12b76a;
+  --color-booked: #f04438;
+  --color-pending: #f79009;
+  --color-maintenance: #98a2b3;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-background);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
 }
