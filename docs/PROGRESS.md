@@ -2,9 +2,9 @@
 
 ## CURRENT STATE
 
-- **Stage:** Setup — before any code
-- **Last done:** decisions D1-D6 (foundations decided)
-- **Next action:** first feature branch `chore/scaffold` — Next.js scaffold, then docker-compose + first migration
+- **Stage:** Scaffold merged (PR #1); starting schema on `feat/schema`
+- **Last done:** D1-D8; scaffold, Docker Postgres 16 on 5433, pg pool, `/api/health` merged to main
+- **Next action:** design tables with the user (users, categories, resources, reservations); first migration + runner on `feat/schema`
 - **Blockers:** none
 - **Deadline:** Thu 15 Oct 2026, 11:59 PM SLT
 

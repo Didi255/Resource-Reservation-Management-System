@@ -154,6 +154,7 @@ Every decision is discussed with me first. The full reasoning goes in
 | 4 | Data access | Raw SQL with `pg`, plain `.sql` migrations (D5) | Small schema; constraints/locking visible and explainable; simple |
 | 3 | Database hosting | Docker, `postgres:16` pinned, host port 5433 (D6) | One-command reproducible setup for reviewers |
 | 9 | Styling | Tailwind CSS (D7) | Fast, consistent, full control of the look |
+| 12 | Resource modelling | One `resources` table + `categories` (D8) | One honest FK from reservations; overlap rule in one place |
 | 11 | Branching | Feature branches + PR into `main` for code; docs-only changes straight to `main` | Reviewable units, `main` always works; PR ceremony isn't worth it for docs |
 
 ### ❓ Open — discuss in roughly this order
