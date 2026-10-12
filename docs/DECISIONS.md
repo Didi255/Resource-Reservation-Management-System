@@ -53,3 +53,11 @@
 - **Chosen:** Tailwind CSS.
 - **Why:** Fast to style consistently inside a 3-day window, and it keeps the look fully under my control (a component library would impose its own). It integrates with Next.js through the standard scaffold.
 - **Trade-off accepted:** Utility classes make markup noisier, and there is a small learning cost compared with plain CSS.
+
+
+## D8: One `resources` table with a category, not separate tables per kind
+- **Date:** 2026-10-12
+- **Options considered:** separate `facilities` and `equipment` tables / one `resources` table that references a `categories` table.
+- **Chosen:** one `resources` table.
+- **Why:** A reservation needs one honest foreign key to the thing booked. Two tables would force a polymorphic association (two nullable columns, or a type plus an unchecked id), which the database cannot enforce. The overlap guarantee from D4 would also have to be duplicated per table. With one table the rule lives in one place and a new kind of resource is a new row.
+- **Trade-off accepted:** facilities and equipment cannot have different columns without nullable fields or a side table. That is acceptable because the system only needs name, description, location and an active flag for every kind.
