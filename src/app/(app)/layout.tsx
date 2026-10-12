@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
-import { AppNav, type NavItem } from "@/components/app-nav";
+import { AppShell } from "@/components/app-shell";
+import type { NavItem } from "@/components/app-nav";
 import { Suspense } from "react";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -21,10 +22,9 @@ async function Shell({ children }: { children: React.ReactNode }) {
     ];
 
     return (
-        <div className="min-h-[100dvh]">
-            <AppNav items={items} userName={user.name} role={user.role} />
-            <main className="px-4 pb-24 pt-6 sm:px-6 lg:ml-60 lg:px-10 lg:pb-12 lg:pt-10">{children}</main>
-        </div>
+        <AppShell items={items} userName={user.name} role={user.role}>
+            {children}
+        </AppShell>
     );
 }
 
