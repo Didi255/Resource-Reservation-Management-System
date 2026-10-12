@@ -3,7 +3,10 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { AvailabilitySummary } from "@/components/availability-summary";
 import { CategoryTabs } from "@/components/category-tabs";
+import { FloorPlan } from "@/components/floor-plan";
+import { ResourceDetail } from "@/components/resource-detail";
 import { ResourceGrid } from "@/components/resource-grid";
+import { ViewToggle, type View } from "@/components/view-toggle";
 import { WindowPicker } from "@/components/window-picker";
 import type { Availability, SpaceRow } from "@/lib/availability";
 import { defaultWindow, toRange, type TimeWindow } from "@/lib/time-window";
@@ -27,6 +30,8 @@ export function SpacesView() {
     const [error, setError] = useState<string | null>(null);
     // undefined = not chosen yet, so the first category opens by default
     const [selected, setSelected] = useState<string | null | undefined>(undefined);
+    const [view, setView] = useState<View>("list");
+    const [selectedId, setSelectedId] = useState<number | null>(null);
 
     const range = useMemo(() => (window ? toRange(window) : null), [window]);
     const start = range?.start;
@@ -86,6 +91,11 @@ export function SpacesView() {
         </section>
     );
 
+    // Plan view: only resources with a position can be pinned; the rest are listed beside it.
+    const placed = rows.filter((r) => r.planX !== null && r.planY !== null);
+    const unplaced = rows.filter((r) => r.planX === null || r.planY === null);
+    const selectedSpace = rows.find((r) => r.id === selectedId) ?? null;
+
     if (!window) return null;
 
     const windowLabel = range
@@ -135,13 +145,39 @@ export function SpacesView() {
                 <>
                     <AvailabilitySummary counts={counts} windowLabel={windowLabel} />
 
-                    <CategoryTabs
-                        groups={groups}
-                        active={active}
-                        onSelect={(name) => setSelected(active === name ? null : name)}
-                    >
-                        {panel}
-                    </CategoryTabs>
+                    <div className="flex items-center justify-between gap-3">
+                        <h2 className="text-base font-semibold tracking-tight">
+                            {view === "list" ? "Browse by category" : "Office floor plan"}
+                        </h2>
+                        <ViewToggle value={view} onChange={setView} />
+                    </div>
+
+                    {view === "list" ? (
+                        <CategoryTabs
+                            groups={groups}
+                            active={active}
+                            onSelect={(name) => setSelected(active === name ? null : name)}
+                        >
+                            {panel}
+                        </CategoryTabs>
+                    ) : (
+                        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+                            <div className="space-y-6">
+                                <FloorPlan spaces={placed} selectedId={selectedId} onSelect={setSelectedId} />
+
+                                {unplaced.length > 0 && (
+                                    <section aria-label="Resources not on the plan">
+                                        <h3 className="mb-3 text-sm font-semibold">Not on the plan</h3>
+                                        <ResourceGrid spaces={unplaced} />
+                                    </section>
+                                )}
+                            </div>
+
+                            <div className="lg:sticky lg:top-6">
+                                <ResourceDetail space={selectedSpace} windowLabel={windowLabel} />
+                            </div>
+                        </div>
+                    )}
                 </>
             )}
         </div>
