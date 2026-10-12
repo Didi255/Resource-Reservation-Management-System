@@ -85,3 +85,19 @@
 - **Chosen:** three focused reports over a date range: utilization per resource, requests by status and category, peak times.
 - **Why:** The brief asks for "a clear understanding of usage and availability". Each report is one query that demonstrates a different SQL technique, built only after the core booking flow is solid.
 - **Trade-off accepted:** fixed reports, no export or custom filters. Utilization is the one to keep if time runs out.
+
+
+## D12: `TEXT` + `CHECK` for enumerated values, two `timestamptz` columns for time ranges
+- **Date:** 2026-10-12
+- **Options considered:** native `ENUM` / `TEXT` with `CHECK`; one `tstzrange` column / `start_time` + `end_time`.
+- **Chosen:** `TEXT` + `CHECK`, and two timestamp columns.
+- **Why:** Same protection as an enum, but adding a value is a simple constraint change. Two columns are easier to read, validate and aggregate in reports; the exclusion constraint builds the range with `tstzrange(start_time, end_time)`.
+- **Trade-off accepted:** the range is derived in the constraint rather than stored, so the constraint expression must match any range-based queries.
+
+
+## D13: Resource `status` replaces an active flag; no `capacity` column
+- **Date:** 2026-10-12
+- **Options considered:** `is_active` boolean plus a separate condition column / one `status` column (`available`, `under_maintenance`, `retired`) plus `condition_notes`; and an informational `capacity` column / none.
+- **Chosen:** single `status` column, free-text `condition_notes`, no `capacity`.
+- **Why:** "usable?" and "condition?" are one question, and two columns could disagree. Capacity as concurrent use is the counting problem excluded by D3. As a plain seat count it solves none of the problems in the brief, would be empty for equipment, and is only useful with an attendees field and a filter that are out of scope. Seat counts can go in `description`.
+- **Trade-off accepted:** no filtering or validation by room size. Adding a column later is a single migration.

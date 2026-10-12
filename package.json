@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "migrate": "node --env-file=.env scripts/migrate.mjs"
+
   },
   "dependencies": {
     "next": "16.4.0",
