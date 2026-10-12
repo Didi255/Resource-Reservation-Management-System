@@ -36,6 +36,11 @@
   --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", monospace;
 }
 
+/* Light theme only (D17, D19). "only light" also stops browsers from force-darkening the page. */
+:root {
+  color-scheme: only light;
+}
+
 body {
   background: var(--color-background);
   color: var(--color-ink);
