@@ -6,7 +6,9 @@ import { createReservationSchema, statusFilterSchema } from "@/lib/reservations/
 export async function GET(request: Request) {
     try {
         const user = await requireUser();
-        const raw = new URL(request.url).searchParams.get("status");
+        const params = new URL(request.url).searchParams;
+        const raw = params.get("status");
+        const mineOnly = params.get("mine") === "1";
 
         let status: string | undefined;
         if (raw !== null) {
@@ -15,7 +17,7 @@ export async function GET(request: Request) {
             status = parsed.data;
         }
 
-        return Response.json({ reservations: await listReservations(user, status) });
+        return Response.json({ reservations: await listReservations(user, status, mineOnly) });
     } catch (error) {
         return errorResponse(error);
     }
