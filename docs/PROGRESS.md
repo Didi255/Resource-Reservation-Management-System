@@ -2,14 +2,15 @@
 
 ## CURRENT STATE
 
-- **Stage:** Backend core complete. UI foundation and the Spaces page are built; booking, floor plan and admin screens are next.
-- **Done:** D1-D21. Schema 001-007 + runner. Auth (register/login/logout/me, DB sessions). Resources API. Reservation lifecycle (create/approve/reject/cancel/list) as transactions. `npm run test:concurrency` PASSES: 50 parallel approvals -> 1x200, 49x409 (screenshot in `docs/concurrency-proof.png`); the script now deletes its own rows afterwards. Availability endpoint (`GET /api/availability?start&end`, D20). UI: app shell (sidebar / bottom tab bar), login and register, Spaces page with clock-dial time picker, summary tiles and category cards that open their resources inline.
-- **In flight:** PR for `feat/ui-foundation` (merge it, then `git switch main; git pull; git switch -c feat/floor-plan`).
-- **Next action:** floor plan with pins (D18, D21), then the booking panel/form, My bookings (cancel), Admin approvals, Admin reports.
-- **Still to build:** floor-plan view with pins and a Plan/List toggle; booking form (POST /api/reservations from the UI) with a day timeline; My bookings; Admin approvals; reports queries (D11); teams (D15, migration 008); README with setup + known limitations; fresh-clone test; demo video; add `plan_x`/`plan_y` to the ER diagram; final UI polish pass.
-- **Known limitations to list in README:** no rate limiting, no email verification/reset, registration reveals whether an email exists, quantity per resource not supported (D3), demo passwords in seed, single floor plan (D21), availability shows state but not who booked (D20).
+- **Stage:** Feature complete. Only the submission deliverables remain.
+- **Done:** D1-D22 (D15 teams was prototyped and dropped). Schema 001-007 + runner. Auth (register/login/logout/me, DB sessions). Resources API with categories and floor-plan positions. Reservation lifecycle (create/approve/reject/cancel/list, `mine=1`) as transactions. Availability endpoint. Admin reports (utilisation, requests by category, peak times with heatmap). UI: app shell with collapsible sidebar, login and register, Spaces (floor plan with push pins), Resources (category cards), My bookings (cancel with confirmation), Admin approvals, Manage resources (retire, place on plan), Reports (tabs, donut, stacked bars, heatmap).
+- **Proof:** `npm run test:concurrency` PASSES: 50 parallel approvals -> 1x200, 49x409, one approved row, no 5xx (`docs/concurrency-proof.png`). `db/tests/overlap.sql` checks the constraint in plain SQL.
+- **Demo data:** `npm run seed` (base) then `npm run seed:demo` (about 40 reservations, six extra members). Demo resets reservations.
+- **Bug found and fixed on the way:** the utilisation report counted unbooked resources as fully booked, because `LEAST`/`GREATEST` ignore NULLs on a LEFT JOIN. Found by checking the numbers against raw data.
+- **Next action:** fresh-clone test (clone into a new folder, follow the README exactly), then record the demo video.
+- **Still to do:** update the ER diagram on dbdiagram.io from `docs/er-diagram.dbml` (now includes `plan_x`/`plan_y`, `retired`), demo video (3-5 minutes), submit the Google Form with the same email as the CV.
 - **ER diagram:** https://dbdiagram.io/d/Resource-Management-Sysytem-Database-Diagram-6acc45e327cfb7f1bcda3ba9 (source `docs/er-diagram.dbml`)
-- **Working agreement:** bigger chunks, full code blocks; user can ask me to place files; user commits everything; explain what and why before writing code.
+- **Known limitations:** listed in the README.
 - **Deadline:** Thu 15 Oct 2026, 11:59 PM SLT (submit by Thursday afternoon)
 
 ---
@@ -20,8 +21,9 @@
 - Read the brief. Wrote `AI.md` (teaching rules, assessment constraints, open decisions).
 - Found that `D:\projects` was the cs_ehr git repo, so this folder needed its own `.git` (resolved; the parent `.git` was removed).
 
-### 2026-10-12 — Session 2
-- Backend core finished and proven under concurrency (see above).
-- Floor-plan illustration, six category illustrations and a login hero added under `public/`.
-- Built the UI foundation and Spaces page. Visual system refined (D19). Fixed a Cache Components blocking-route error by moving cookie reads behind `<Suspense>`.
-- Lint found a setState-in-effect; replaced with `useSyncExternalStore` for the browser-only initial time.
+### 2026-10-12 and 2026-10-13 — Session 2
+- Backend core finished and proven under concurrency.
+- Built the whole UI: shell, auth pages, plan, list, bookings, admin approvals, resource management, reports. Visual system refined (D19).
+- Fixed a Cache Components blocking-route error by moving cookie reads behind `<Suspense>`.
+- Prototyped teams (D15), then removed them as over-engineered.
+- Wrote the README, demo seed and this progress file.
