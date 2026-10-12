@@ -10,14 +10,20 @@ export class HttpError extends Error {
     }
 }
 
-export async function parseBody<T>(request: Request, schema: z.ZodType<T>): Promise<T> {
-    const body = await request.json().catch(() => null);
+export async function parseBody<T>(
+    request: Request,
+    schema: z.ZodType<T>,
+    options: { emptyOk?: boolean } = {}
+): Promise<T> {
+    const raw = await request.json().catch(() => null);
+    const body = raw === null && options.emptyOk ? {} : raw;
     const parsed = schema.safeParse(body);
     if (!parsed.success) {
         throw new HttpError(400, "Invalid input", z.flattenError(parsed.error).fieldErrors);
     }
     return parsed.data;
 }
+
 
 export function errorResponse(error: unknown): Response {
     if (error instanceof HttpError) {
