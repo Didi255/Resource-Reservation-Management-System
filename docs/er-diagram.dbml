@@ -1,0 +1,60 @@
+// Paste into https://dbdiagram.io to render the ER diagram.
+// DBML cannot express CHECK or EXCLUDE constraints; they are listed in the notes.
+
+Table users {
+  id integer [pk, increment]
+  name text [not null]
+  email text [not null, unique]
+  phone text
+  password_hash text [not null]
+  role text [not null, default: 'member', note: "CHECK role IN ('admin','member')"]
+  created_at timestamptz [not null, default: `now()`]
+}
+
+Table categories {
+  id integer [pk, increment]
+  name text [not null, unique]
+}
+
+Table resources {
+  id integer [pk, increment]
+  category_id integer [not null]
+  name text [not null]
+  location text [not null]
+  description text
+  status text [not null, default: 'available', note: "CHECK status IN ('available','under_maintenance','retired')"]
+  condition_notes text
+  created_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (category_id, name) [unique]
+  }
+}
+
+Table reservations {
+  id integer [pk, increment]
+  resource_id integer [not null]
+  user_id integer [not null, note: "who requested"]
+  start_time timestamptz [not null]
+  end_time timestamptz [not null, note: "CHECK end_time > start_time"]
+  purpose text [not null]
+  status text [not null, default: 'pending', note: "CHECK status IN ('pending','approved','rejected','cancelled')"]
+  created_at timestamptz [not null, default: `now()`]
+
+  Note: "EXCLUDE USING gist (resource_id WITH =, tstzrange(start_time, end_time) WITH &&) WHERE (status = 'approved') — no two approved reservations of the same resource may overlap (D4)."
+}
+
+Table reservation_events {
+  id integer [pk, increment]
+  reservation_id integer [not null]
+  actor_id integer [not null, note: "who did it (may be an admin)"]
+  event_type text [not null, note: "requested | approved | rejected | cancelled"]
+  reason text [note: "required for admin cancellations"]
+  created_at timestamptz [not null, default: `now()`]
+}
+
+Ref: resources.category_id > categories.id
+Ref: reservations.resource_id > resources.id
+Ref: reservations.user_id > users.id
+Ref: reservation_events.reservation_id > reservations.id
+Ref: reservation_events.actor_id > users.id
