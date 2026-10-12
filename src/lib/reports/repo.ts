@@ -20,8 +20,11 @@ export async function getReports({ from, to, tz }: ReportInput) {
                 r.name,
                 c.name AS category,
                 COUNT(rv.id)::int AS bookings,
+                -- LEAST and GREATEST ignore NULLs, so a resource with no bookings (all-NULL join row)
+                -- would look booked for the whole range. FILTER keeps only real booking rows.
                 COALESCE(SUM(EXTRACT(EPOCH FROM
-                    (LEAST(rv.end_time, b.to_ts) - GREATEST(rv.start_time, b.from_ts)))) / 3600, 0)::float AS hours,
+                    (LEAST(rv.end_time, b.to_ts) - GREATEST(rv.start_time, b.from_ts))))
+                    FILTER (WHERE rv.id IS NOT NULL) / 3600, 0)::float AS hours,
                 (EXTRACT(EPOCH FROM (b.to_ts - b.from_ts)) / 3600)::float AS "rangeHours"
            FROM bounds b
           CROSS JOIN resources r
