@@ -26,6 +26,14 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
 const subscribeNever = () => () => {};
 
+const TABS = [
+    { key: "utilisation", label: "Utilisation" },
+    { key: "requests", label: "Requests by category" },
+    { key: "peak", label: "Peak times" },
+] as const;
+
+type TabKey = (typeof TABS)[number]["key"];
+
 export function AdminReports() {
     // "today" only exists in the browser: false on the server, true after hydration
     const mounted = useSyncExternalStore(subscribeNever, () => true, () => false);
@@ -51,6 +59,7 @@ export function AdminReports() {
 
     const [report, setReport] = useState<Report | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [tab, setTab] = useState<TabKey>("utilisation");
 
     const from = range?.from;
     const to = range?.to;
@@ -198,8 +207,53 @@ export function AdminReports() {
                         <Metric label="Avg. utilisation" value={`${summary.average}%`} hint="across all resources" />
                     </dl>
 
+                    {/* Tabs: one report at a time */}
+                    <div
+                        role="tablist"
+                        aria-label="Report sections"
+                        className="flex gap-1 overflow-x-auto border-b border-line"
+                    >
+                        {TABS.map((t, index) => {
+                            const active = tab === t.key;
+                            return (
+                                <button
+                                    key={t.key}
+                                    type="button"
+                                    role="tab"
+                                    id={`tab-${t.key}`}
+                                    aria-selected={active}
+                                    aria-controls={`panel-${t.key}`}
+                                    tabIndex={active ? 0 : -1}
+                                    onClick={() => setTab(t.key)}
+                                    onKeyDown={(e) => {
+                                        // arrow keys move between tabs, as people expect from a tab list
+                                        const offset = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+                                        if (!offset) return;
+                                        e.preventDefault();
+                                        const next = TABS[(index + offset + TABS.length) % TABS.length];
+                                        setTab(next.key);
+                                        document.getElementById(`tab-${next.key}`)?.focus();
+                                    }}
+                                    className={`-mb-px shrink-0 whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium outline-none transition-colors focus-visible:rounded-t-md focus-visible:ring-2 focus-visible:ring-primary/40 ${
+                                        active
+                                            ? "border-primary text-primary"
+                                            : "border-transparent text-muted hover:text-ink"
+                                    }`}
+                                >
+                                    {t.label}
+                                </button>
+                            );
+                        })}
+                    </div>
+
                     {/* 1. Utilisation */}
-                    <section className="rounded-xl border border-line bg-surface">
+                    <section
+                        role="tabpanel"
+                        id="panel-utilisation"
+                        aria-labelledby="tab-utilisation"
+                        hidden={tab !== "utilisation"}
+                        className="rounded-xl border border-line bg-surface"
+                    >
                         <div className="p-4 pb-3 sm:p-5 sm:pb-3">
                             <h2 className="text-lg font-semibold tracking-tight">Utilisation by resource</h2>
                             <p className="mt-1 text-sm text-muted">
@@ -257,7 +311,13 @@ export function AdminReports() {
                     </section>
 
                     {/* 2. Requests by category */}
-                    <section className="rounded-xl border border-line bg-surface">
+                    <section
+                        role="tabpanel"
+                        id="panel-requests"
+                        aria-labelledby="tab-requests"
+                        hidden={tab !== "requests"}
+                        className="rounded-xl border border-line bg-surface"
+                    >
                         <div className="p-4 pb-3 sm:p-5 sm:pb-3">
                             <h2 className="text-lg font-semibold tracking-tight">Requests by category</h2>
                             <p className="mt-1 text-sm text-muted">Bookings that start inside the range.</p>
@@ -316,7 +376,13 @@ export function AdminReports() {
                     </section>
 
                     {/* 3. Peak times */}
-                    <section className="rounded-xl border border-line bg-surface p-4 sm:p-5">
+                    <section
+                        role="tabpanel"
+                        id="panel-peak"
+                        aria-labelledby="tab-peak"
+                        hidden={tab !== "peak"}
+                        className="rounded-xl border border-line bg-surface p-4 sm:p-5"
+                    >
                         <h2 className="text-lg font-semibold tracking-tight">Peak times</h2>
                         <p className="mt-1 text-sm text-muted">
                             Approved bookings by start time, in your timezone. The busiest bar is darker.
