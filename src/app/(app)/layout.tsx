@@ -15,7 +15,10 @@ async function Shell({ children }: { children: React.ReactNode }) {
     const user = await getCurrentUser();
     if (!user) redirect("/login");
 
-    const items: NavItem[] = [{ href: "/spaces", label: "Spaces", icon: "spaces" }];
+    const items: NavItem[] = [
+        { href: "/spaces", label: "Spaces", icon: "plan" },
+        { href: "/resources", label: "Resources", icon: "list" },
+    ];
 
     return (
         <div className="min-h-[100dvh]">

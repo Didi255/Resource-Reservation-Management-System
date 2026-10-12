@@ -1,13 +1,14 @@
 "use client";
 
-import { CalendarBlank, CheckCircle, House, SignOut, type Icon } from "@phosphor-icons/react";
+import { CalendarBlank, CheckCircle, MapTrifold, SignOut, SquaresFour, type Icon } from "@phosphor-icons/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
-export type NavItem = { href: string; label: string; icon: "spaces" | "bookings" | "approvals" };
+export type NavItem = { href: string; label: string; icon: "plan" | "list" | "bookings" | "approvals" };
 
 const ICONS: Record<NavItem["icon"], Icon> = {
-    spaces: House,
+    plan: MapTrifold,
+    list: SquaresFour,
     bookings: CalendarBlank,
     approvals: CheckCircle,
 };
