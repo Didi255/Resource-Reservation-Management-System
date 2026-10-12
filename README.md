@@ -20,6 +20,20 @@ what is available. The one that must be *impossible*, not just unlikely, is doub
 - **It is proven, not claimed.** `npm run test:concurrency` fires 50 simultaneous approvals for the
   same slot and asserts exactly one wins. See [docs/concurrency-proof.png](docs/concurrency-proof.png).
 
+## Screenshots
+
+Taken with the demo data from `npm run seed:demo`.
+
+| Floor plan with live availability | Approval queue with competing requests |
+|---|---|
+| ![Isometric office floor plan with push pins coloured green, amber, red and grey for free, requested, booked and unavailable](docs/screenshots/plan.webp) | ![Admin approval queue where three requests for the same Huddle Room slot are flagged as competing](docs/screenshots/approvals.png) |
+| Pins show each space's state for the chosen date and time. | Competing requests are flagged so the admin knows approving one blocks the others. |
+
+| Usage reports | On a phone |
+|---|---|
+| ![Reports page with summary cards, a donut of booked hours by category and a ranking of the busiest resources](docs/screenshots/reports.png) | ![Resources page on a phone showing live status counts, category cards and a bottom navigation bar](docs/screenshots/mobile.png) |
+| Utilisation, requests by category, and peak times for any date range. | The same data on a small screen, with bottom navigation. |
+
 ## Features
 
 **Members**
