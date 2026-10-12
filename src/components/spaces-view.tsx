@@ -6,7 +6,6 @@ import { CategoryTabs } from "@/components/category-tabs";
 import { FloorPlan } from "@/components/floor-plan";
 import { ResourceDetail } from "@/components/resource-detail";
 import { ResourceGrid } from "@/components/resource-grid";
-import { ViewToggle, type View } from "@/components/view-toggle";
 import { WindowPicker } from "@/components/window-picker";
 import type { Availability, SpaceRow } from "@/lib/availability";
 import { defaultWindow, toRange, type TimeWindow } from "@/lib/time-window";
@@ -18,20 +17,22 @@ const shortTime = (iso: string) =>
 
 const subscribeNever = () => () => {};
 
-export function SpacesView() {
+/** "plan" is the floor plan (Spaces); "list" is browse-by-category (Resources). */
+export function SpacesView({ mode }: { mode: "plan" | "list" }) {
     // false while rendering on the server, true in the browser. "Now" only exists
     // in the browser, and this avoids a hydration mismatch without an effect.
     const mounted = useSyncExternalStore(subscribeNever, () => true, () => false);
     const initialWindow = useMemo(() => (mounted ? defaultWindow() : null), [mounted]);
     const [chosen, setWindow] = useState<TimeWindow | null>(null);
     const window = chosen ?? initialWindow;
+
     const [rows, setRows] = useState<SpaceRow[]>([]);
     const [loaded, setLoaded] = useState(false);
     const [error, setError] = useState<string | null>(null);
     // undefined = not chosen yet, so the first category opens by default
     const [selected, setSelected] = useState<string | null | undefined>(undefined);
-    const [view, setView] = useState<View>("list");
     const [selectedId, setSelectedId] = useState<number | null>(null);
+    const [refreshKey, setRefreshKey] = useState(0); // bump to refetch after a booking
 
     const range = useMemo(() => (window ? toRange(window) : null), [window]);
     const start = range?.start;
@@ -56,7 +57,7 @@ export function SpacesView() {
             });
 
         return () => controller.abort();
-    }, [start, end]);
+    }, [start, end, refreshKey]);
 
     // The API returns rows sorted by category, so Map keeps that order.
     const groups = useMemo(() => {
@@ -69,32 +70,26 @@ export function SpacesView() {
         return [...map.entries()];
     }, [rows]);
 
+    // The summary counts what the page shows: pinned resources on the plan, everything on the list.
     const counts = useMemo(() => {
         const result: Record<Availability, number> = { free: 0, pending: 0, booked: 0, maintenance: 0 };
-        for (const row of rows) result[row.availability]++;
+        for (const row of rows) {
+            const onPlan = row.planX !== null && row.planY !== null;
+            if (mode === "plan" && !onPlan) continue;
+            result[row.availability]++;
+        }
         return result;
-    }, [rows]);
+    }, [rows, mode]);
 
     const active = selected === undefined ? (groups[0]?.[0] ?? null) : selected;
     const activeSpaces = groups.find(([name]) => name === active)?.[1] ?? [];
     const activeFree = activeSpaces.filter((s) => s.availability === "free").length;
 
-    const panel = active && (
-        <section aria-label={active} className="rounded-xl border border-line bg-surface p-4 sm:p-5">
-            <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
-                <h2 className="text-base font-semibold tracking-tight">{active}</h2>
-                <p className="font-mono text-xs text-muted">
-                    {activeFree} of {activeSpaces.length} available
-                </p>
-            </div>
-            <ResourceGrid spaces={activeSpaces} />
-        </section>
-    );
-
-    // Plan view: only resources with a position can be pinned; the rest are listed beside it.
+    // Plan view: only resources with a position can be pinned. The rest live on the Resources page.
     const placed = rows.filter((r) => r.planX !== null && r.planY !== null);
-    const unplaced = rows.filter((r) => r.planX === null || r.planY === null);
     const selectedSpace = rows.find((r) => r.id === selectedId) ?? null;
+
+    const refresh = () => setRefreshKey((k) => k + 1);
 
     if (!window) return null;
 
@@ -104,15 +99,52 @@ export function SpacesView() {
 
     const loading = !loaded && error === null;
 
+    // the open category: its resources, and the chosen resource's details and booking form
+    const panel = active && (
+        <section
+            key={active}
+            aria-label={active}
+            className="reveal space-y-4 rounded-xl border border-line bg-surface p-4 sm:p-5"
+        >
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <h2 className="text-base font-semibold tracking-tight">{active}</h2>
+                <p className="font-mono text-xs text-muted">
+                    {activeFree} of {activeSpaces.length} available
+                </p>
+            </div>
+
+            <ResourceGrid spaces={activeSpaces} selectedId={selectedId} onSelect={setSelectedId} />
+
+            {selectedSpace && selectedSpace.categoryName === active && (
+                <ResourceDetail
+                    space={selectedSpace}
+                    windowLabel={windowLabel}
+                    range={range}
+                    onBooked={refresh}
+                />
+            )}
+        </section>
+    );
+
     return (
         <div className="mx-auto w-full max-w-6xl space-y-6">
             <header>
                 <p className="font-mono text-xs uppercase tracking-wider text-muted">Availability</p>
                 <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
-                    Find your <span className="text-primary">space</span>
+                    {mode === "plan" ? (
+                        <>
+                            Find your <span className="text-primary">space</span>
+                        </>
+                    ) : (
+                        <>
+                            Browse <span className="text-primary">resources</span>
+                        </>
+                    )}
                 </h1>
                 <p className="mt-1 max-w-[65ch] text-muted">
-                    Choose a date and time to discover available resources.
+                    {mode === "plan"
+                        ? "Choose a date and time, then pick a pin on the floor plan."
+                        : "Choose a date and time to see every resource by category."}
                 </p>
             </header>
 
@@ -145,14 +177,11 @@ export function SpacesView() {
                 <>
                     <AvailabilitySummary counts={counts} windowLabel={windowLabel} />
 
-                    <div className="flex items-center justify-between gap-3">
-                        <h2 className="text-base font-semibold tracking-tight">
-                            {view === "list" ? "Browse by category" : "Office floor plan"}
-                        </h2>
-                        <ViewToggle value={view} onChange={setView} />
-                    </div>
+                    <h2 className="text-base font-semibold tracking-tight">
+                        {mode === "list" ? "Browse by category" : "Office floor plan"}
+                    </h2>
 
-                    {view === "list" ? (
+                    {mode === "list" ? (
                         <CategoryTabs
                             groups={groups}
                             active={active}
@@ -161,20 +190,18 @@ export function SpacesView() {
                             {panel}
                         </CategoryTabs>
                     ) : (
-                        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+                        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
                             <div className="space-y-6">
                                 <FloorPlan spaces={placed} selectedId={selectedId} onSelect={setSelectedId} />
-
-                                {unplaced.length > 0 && (
-                                    <section aria-label="Resources not on the plan">
-                                        <h3 className="mb-3 text-sm font-semibold">Not on the plan</h3>
-                                        <ResourceGrid spaces={unplaced} />
-                                    </section>
-                                )}
                             </div>
 
                             <div className="lg:sticky lg:top-6">
-                                <ResourceDetail space={selectedSpace} windowLabel={windowLabel} />
+                                <ResourceDetail
+                                    space={selectedSpace}
+                                    windowLabel={windowLabel}
+                                    range={range}
+                                    onBooked={refresh}
+                                />
                             </div>
                         </div>
                     )}
