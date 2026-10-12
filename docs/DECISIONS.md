@@ -61,3 +61,27 @@
 - **Chosen:** one `resources` table.
 - **Why:** A reservation needs one honest foreign key to the thing booked. Two tables would force a polymorphic association (two nullable columns, or a type plus an unchecked id), which the database cannot enforce. The overlap guarantee from D4 would also have to be duplicated per table. With one table the rule lives in one place and a new kind of resource is a new row.
 - **Trade-off accepted:** facilities and equipment cannot have different columns without nullable fields or a side table. That is acceptable because the system only needs name, description, location and an active flag for every kind.
+
+
+## D9: Resource names are unique within a category
+- **Date:** 2026-10-12
+- **Options considered:** no uniqueness / `UNIQUE (category_id, name)`.
+- **Chosen:** unique within a category.
+- **Why:** Two identically named resources are exactly the "scheduling confusion" the brief describes, and the database can prevent it with one constraint. Resources get a surrogate integer id because names change.
+- **Trade-off accepted:** admins must give each unit a distinct name ("Projector 1", "Projector 2").
+
+
+## D10: Reservation history in a `reservation_events` table
+- **Date:** 2026-10-12
+- **Options considered:** four tables, with only the current status stored on `reservations` / a fifth table recording each state change with actor, time and reason.
+- **Chosen:** add `reservation_events`.
+- **Why:** It gives a real usage history, is the natural home for the mandatory cancellation reason, and makes approval a genuine multi-statement transaction (update status and insert event, atomically).
+- **Trade-off accepted:** one more table to write and keep consistent; every status change must also write an event.
+
+
+## D11: Admin reports are three SQL queries, not a reporting module
+- **Date:** 2026-10-12
+- **Options considered:** no reporting / three focused reports on a dashboard / a configurable analytics module.
+- **Chosen:** three focused reports over a date range: utilization per resource, requests by status and category, peak times.
+- **Why:** The brief asks for "a clear understanding of usage and availability". Each report is one query that demonstrates a different SQL technique, built only after the core booking flow is solid.
+- **Trade-off accepted:** fixed reports, no export or custom filters. Utilization is the one to keep if time runs out.

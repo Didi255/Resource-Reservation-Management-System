@@ -48,7 +48,7 @@ database, not only by application code.
 8. Admin cancellation with mandatory reason
 
 ### Should have (if Must is solid by Day 3)
-9. Usage overview for admin (bookings per resource, utilization over a period)
+9. **Admin reports dashboard** over a date range: utilization per resource, requests by status and category, peak times (one SQL query each)
 10. Filter/search resources by category and by "free during this time"
 11. Pending-conflict warning for admin (other requests competing for the same slot)
 
