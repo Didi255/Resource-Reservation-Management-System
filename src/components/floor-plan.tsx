@@ -58,7 +58,9 @@ export function FloorPlan({
                                 state={space.availability}
                                 selected={selected}
                                 className={`block origin-bottom drop-shadow-sm transition-transform duration-200 group-hover:scale-110 ${
-                                    selected ? "h-10 w-[25px] scale-110 sm:h-12 sm:w-[30px]" : "h-8 w-[20px] sm:h-10 sm:w-[25px]"
+                                    selected
+                                        ? "h-10 w-[25px] scale-110 sm:h-12 sm:w-[30px] xl:h-14 xl:w-[35px]"
+                                        : "h-8 w-[20px] sm:h-10 sm:w-[25px] xl:h-12 xl:w-[30px]"
                                 }`}
                             />
                             <span

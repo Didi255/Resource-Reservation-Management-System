@@ -25,7 +25,7 @@ export function ResourceDetail({
         return (
             <aside className="flex min-h-48 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-line bg-surface p-6 text-center">
                 <CursorClick size={24} className="text-muted" aria-hidden />
-                <p className="text-sm text-muted">Select a pin on the plan to see its details.</p>
+                <p className="text-sm text-muted">Select a space on the floor plan to view details.</p>
             </aside>
         );
     }
