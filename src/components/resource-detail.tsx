@@ -1,10 +1,11 @@
 import { CursorClick, MapPin } from "@phosphor-icons/react/dist/ssr";
 import { AvailabilityBadge } from "@/components/availability-badge";
+import { BookingForm } from "@/components/booking-form";
 import type { Availability, SpaceRow } from "@/lib/availability";
 
 const STATUS_NOTE: Record<Availability, string> = {
     free: "Free for the selected window.",
-    pending: "Someone has requested this slot. An admin has not decided yet.",
+    pending: "Someone has requested this slot and an admin has not decided yet. You can still request it.",
     booked: "Already booked for part or all of the selected window.",
     maintenance: "Not available for booking right now.",
 };
@@ -12,9 +13,13 @@ const STATUS_NOTE: Record<Availability, string> = {
 export function ResourceDetail({
     space,
     windowLabel,
+    range,
+    onBooked,
 }: {
     space: SpaceRow | null;
     windowLabel: string | null;
+    range: { start: string; end: string } | null;
+    onBooked: () => void;
 }) {
     if (!space) {
         return (
@@ -44,6 +49,17 @@ export function ResourceDetail({
             <div className="mt-5 rounded-lg bg-background px-3 py-2.5 text-sm">
                 {windowLabel && <p className="font-medium">{windowLabel}</p>}
                 <p className="text-muted">{STATUS_NOTE[space.availability]}</p>
+            </div>
+
+            {/* key resets the form (typed purpose, success state) when another resource is chosen */}
+            <div className="mt-5">
+                <BookingForm
+                    key={space.id}
+                    resourceId={space.id}
+                    availability={space.availability}
+                    range={range}
+                    onBooked={onBooked}
+                />
             </div>
         </aside>
     );
