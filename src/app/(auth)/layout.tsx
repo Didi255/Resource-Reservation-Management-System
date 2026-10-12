@@ -5,7 +5,7 @@ import { Suspense } from "react";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
     return (
-        <main className="grid min-h-screen lg:grid-cols-2">
+        <main className="grid min-h-[100dvh] lg:grid-cols-2">
             <section className="flex items-center justify-center px-4 py-10 sm:px-8">
                 <div className="w-full max-w-sm">{children}</div>
             </section>
