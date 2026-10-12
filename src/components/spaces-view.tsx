@@ -98,8 +98,9 @@ export function SpacesView({ mode }: { mode: "plan" | "list" }) {
         : null;
 
     const loading = !loaded && error === null;
+    const isPlan = mode === "plan";
 
-    // the open category: its resources, and the chosen resource's details and booking form
+    // List page: the open category's resources, and the chosen resource's details and booking form
     const panel = active && (
         <section
             key={active}
@@ -127,28 +128,39 @@ export function SpacesView({ mode }: { mode: "plan" | "list" }) {
     );
 
     return (
-        <div className="mx-auto w-full max-w-6xl space-y-6">
-            <header>
-                <p className="font-mono text-xs uppercase tracking-wider text-muted">Availability</p>
-                <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
-                    {mode === "plan" ? (
-                        <>
-                            Find your <span className="text-primary">space</span>
-                        </>
-                    ) : (
-                        <>
-                            Browse <span className="text-primary">resources</span>
-                        </>
-                    )}
-                </h1>
-                <p className="mt-1 max-w-[65ch] text-muted">
-                    {mode === "plan"
-                        ? "Choose a date and time, then pick a pin on the floor plan."
-                        : "Choose a date and time to see every resource by category."}
-                </p>
-            </header>
+        // the plan page uses the full width; the list page keeps a readable column
+        <div className={`mx-auto w-full space-y-5 ${isPlan ? "max-w-[1800px]" : "max-w-6xl space-y-6"}`}>
+            {/* on the plan page the header uses the same columns as the content below, so the
+                time panel sits exactly above the side column and their edges line up */}
+            <div
+                className={
+                    isPlan
+                        ? "grid items-end gap-4 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-5 xl:grid-cols-[minmax(0,3fr)_minmax(300px,1fr)]"
+                        : "flex flex-col gap-4"
+                }
+            >
+                <header>
+                    <p className="font-mono text-xs uppercase tracking-wider text-muted">Availability</p>
+                    <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
+                        {isPlan ? (
+                            <>
+                                Find your <span className="text-primary">space</span>
+                            </>
+                        ) : (
+                            <>
+                                Browse <span className="text-primary">resources</span>
+                            </>
+                        )}
+                    </h1>
+                    <p className="mt-1 max-w-[65ch] text-muted">
+                        {isPlan
+                            ? "Choose a date and time, then pick a pin on the floor plan."
+                            : "Choose a date and time to see every resource by category."}
+                    </p>
+                </header>
 
-            <WindowPicker value={window} onChange={setWindow} invalid={range === null} />
+                <WindowPicker value={window} onChange={setWindow} invalid={range === null} stacked={isPlan} />
+            </div>
 
             {error && (
                 <p role="alert" className="rounded-lg bg-booked-soft px-3 py-2 text-sm text-booked-ink">
@@ -158,12 +170,24 @@ export function SpacesView({ mode }: { mode: "plan" | "list" }) {
 
             {loading && (
                 <div className="space-y-6" aria-hidden>
-                    <div className="skeleton h-[148px]" />
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        {Array.from({ length: 3 }, (_, i) => (
-                            <div key={i} className="skeleton h-[236px]" />
-                        ))}
-                    </div>
+                    {isPlan ? (
+                        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,3fr)_minmax(300px,1fr)]">
+                            <div className="skeleton aspect-[1680/944]" />
+                            <div className="space-y-4">
+                                <div className="skeleton h-[180px]" />
+                                <div className="skeleton h-[220px]" />
+                            </div>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="skeleton h-[148px]" />
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                                {Array.from({ length: 3 }, (_, i) => (
+                                    <div key={i} className="skeleton h-[236px]" />
+                                ))}
+                            </div>
+                        </>
+                    )}
                 </div>
             )}
 
@@ -173,38 +197,36 @@ export function SpacesView({ mode }: { mode: "plan" | "list" }) {
                 </p>
             )}
 
-            {loaded && rows.length > 0 && (
+            {loaded && rows.length > 0 && isPlan && (
+                // about 75% plan, 25% sidebar; stacks when the columns would get too narrow
+                <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,3fr)_minmax(300px,1fr)]">
+                    <FloorPlan spaces={placed} selectedId={selectedId} onSelect={setSelectedId} />
+
+                    <div className="space-y-4 lg:sticky lg:top-6 lg:max-h-[calc(100dvh-3rem)] lg:overflow-y-auto">
+                        <AvailabilitySummary counts={counts} windowLabel={windowLabel} layout="grid" />
+                        <ResourceDetail
+                            space={selectedSpace}
+                            windowLabel={windowLabel}
+                            range={range}
+                            onBooked={refresh}
+                        />
+                    </div>
+                </div>
+            )}
+
+            {loaded && rows.length > 0 && !isPlan && (
                 <>
                     <AvailabilitySummary counts={counts} windowLabel={windowLabel} />
 
-                    <h2 className="text-base font-semibold tracking-tight">
-                        {mode === "list" ? "Browse by category" : "Office floor plan"}
-                    </h2>
+                    <h2 className="text-base font-semibold tracking-tight">Browse by category</h2>
 
-                    {mode === "list" ? (
-                        <CategoryTabs
-                            groups={groups}
-                            active={active}
-                            onSelect={(name) => setSelected(active === name ? null : name)}
-                        >
-                            {panel}
-                        </CategoryTabs>
-                    ) : (
-                        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-                            <div className="space-y-6">
-                                <FloorPlan spaces={placed} selectedId={selectedId} onSelect={setSelectedId} />
-                            </div>
-
-                            <div className="lg:sticky lg:top-6">
-                                <ResourceDetail
-                                    space={selectedSpace}
-                                    windowLabel={windowLabel}
-                                    range={range}
-                                    onBooked={refresh}
-                                />
-                            </div>
-                        </div>
-                    )}
+                    <CategoryTabs
+                        groups={groups}
+                        active={active}
+                        onSelect={(name) => setSelected(active === name ? null : name)}
+                    >
+                        {panel}
+                    </CategoryTabs>
                 </>
             )}
         </div>
