@@ -192,7 +192,11 @@ export async function cancelReservation(
     });
 }
 
-export async function listReservations(user: CurrentUser, status?: string) {
+/**
+ * Admins normally see every reservation; members only their own.
+ * mineOnly narrows an admin to their own too, which the "My bookings" page needs.
+ */
+export async function listReservations(user: CurrentUser, status?: string, mineOnly = false) {
     const result = await pool.query(
         `SELECT rv.id,
                 rv.start_time  AS "startTime",
@@ -212,7 +216,7 @@ export async function listReservations(user: CurrentUser, status?: string) {
           WHERE ($1::boolean OR rv.user_id = $2)
             AND ($3::text IS NULL OR rv.status = $3)
           ORDER BY rv.start_time DESC`,
-        [user.role === "admin", user.id, status ?? null]
+        [user.role === "admin" && !mineOnly, user.id, status ?? null]
     );
     return result.rows;
 }
