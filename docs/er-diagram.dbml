@@ -4,7 +4,7 @@
 Table users {
   id integer [pk, increment]
   name text [not null]
-  email text [not null, unique]
+  email text [not null, unique, note: "CHECK email = lower(email)"]
   phone text
   password_hash text [not null]
   role text [not null, default: 'member', note: "CHECK role IN ('admin','member')"]
@@ -22,8 +22,10 @@ Table resources {
   name text [not null]
   location text [not null]
   description text
-  status text [not null, default: 'available', note: "CHECK status IN ('available','under_maintenance','retired')"]
+  status text [not null, default: 'available', note: "CHECK status IN ('available','under_maintenance','retired'). 'retired' replaces deletion (D22)"]
   condition_notes text
+  plan_x smallint [note: "percent across the floor plan image, CHECK 0..100"]
+  plan_y smallint [note: "percent down the floor plan image, CHECK 0..100; plan_x and plan_y are both set or both null (D21)"]
   created_at timestamptz [not null, default: `now()`]
 
   indexes {
@@ -35,13 +37,13 @@ Table reservations {
   id integer [pk, increment]
   resource_id integer [not null]
   user_id integer [not null, note: "who requested"]
-  start_time timestamptz [not null]
-  end_time timestamptz [not null, note: "CHECK end_time > start_time"]
+  start_time timestamptz [not null, note: "inclusive"]
+  end_time timestamptz [not null, note: "exclusive. CHECK end_time > start_time"]
   purpose text [not null]
   status text [not null, default: 'pending', note: "CHECK status IN ('pending','approved','rejected','cancelled')"]
   created_at timestamptz [not null, default: `now()`]
 
-  Note: "EXCLUDE USING gist (resource_id WITH =, tstzrange(start_time, end_time) WITH &&) WHERE (status = 'approved') — no two approved reservations of the same resource may overlap (D4)."
+  Note: "EXCLUDE USING gist (resource_id WITH =, tstzrange(start_time, end_time) WITH &&) WHERE (status = 'approved'). No two approved reservations of the same resource may overlap (D4)."
 }
 
 Table reservation_events {
