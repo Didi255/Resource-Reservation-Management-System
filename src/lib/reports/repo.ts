@@ -87,7 +87,22 @@ export async function getReports({ from, to, tz }: ReportInput) {
         params
     );
 
-    const [u, c, h, w] = await Promise.all([utilisation, byCategory, byHour, byWeekday]);
+    // Weekday and hour together, for the heatmap. Only cells with bookings come back.
+    const heatmap = pool.query(
+        `${BOUNDS}
+         SELECT EXTRACT(ISODOW FROM rv.start_time AT TIME ZONE $3::text)::int AS weekday,
+                EXTRACT(HOUR FROM rv.start_time AT TIME ZONE $3::text)::int   AS hour,
+                COUNT(*)::int AS bookings
+           FROM bounds b
+           JOIN reservations rv
+             ON rv.status = 'approved'
+            AND rv.start_time >= b.from_ts
+            AND rv.start_time <  b.to_ts
+          GROUP BY 1, 2`,
+        params
+    );
+
+    const [u, c, h, w, hm] = await Promise.all([utilisation, byCategory, byHour, byWeekday, heatmap]);
 
     const hourMap = new Map<number, number>(h.rows.map((r) => [r.hour, r.bookings]));
     const weekdayMap = new Map<number, number>(w.rows.map((r) => [r.weekday, r.bookings]));
@@ -112,5 +127,6 @@ export async function getReports({ from, to, tz }: ReportInput) {
         // every hour and weekday is present, including the ones with no bookings
         byHour: Array.from({ length: 24 }, (_, hour) => ({ hour, bookings: hourMap.get(hour) ?? 0 })),
         byWeekday: Array.from({ length: 7 }, (_, i) => ({ weekday: i + 1, bookings: weekdayMap.get(i + 1) ?? 0 })),
+        heatmap: hm.rows as { weekday: number; hour: number; bookings: number }[],
     };
 }
