@@ -9,6 +9,7 @@
     "lint": "eslint",
     "migrate": "node --env-file=.env scripts/migrate.mjs",
     "seed": "node --env-file=.env scripts/seed.mjs",
+    "seed:demo": "node --env-file=.env scripts/seed-demo.mjs",
     "test:concurrency": "node --env-file=.env scripts/concurrency-test.mjs"
   },
   "dependencies": {
