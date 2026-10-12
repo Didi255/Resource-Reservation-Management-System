@@ -101,3 +101,11 @@
 - **Chosen:** single `status` column, free-text `condition_notes`, no `capacity`.
 - **Why:** "usable?" and "condition?" are one question, and two columns could disagree. Capacity as concurrent use is the counting problem excluded by D3. As a plain seat count it solves none of the problems in the brief, would be empty for equipment, and is only useful with an attendees field and a filter that are out of scope. Seat counts can go in `description`.
 - **Trade-off accepted:** no filtering or validation by room size. Adding a column later is a single migration.
+
+
+## D14: Database-backed sessions with a hand-rolled login
+- **Date:** 2026-10-12
+- **Options considered:** (A) hand-rolled signed-cookie/JWT with a database role re-check / (B) Auth.js / (C) hand-rolled sessions stored in a `sessions` table.
+- **Chosen:** C.
+- **Why:** The role must be re-checked in the database on each request anyway, so a session lookup costs almost nothing extra. C gives real revocation (logout ends the session; deactivating a user can delete theirs) and is simpler to explain than signing and JWT claims. Passwords are bcrypt hashes, and only a SHA-256 hash of the session token is stored, so a leaked table cannot be used to log in. The cookie is `HttpOnly` and `SameSite=Lax`.
+- **Trade-off accepted:** one more table and one query per request. Known limitations, stated in the README: no rate limiting, no email verification, no password reset.

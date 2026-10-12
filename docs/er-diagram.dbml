@@ -53,6 +53,15 @@ Table reservation_events {
   created_at timestamptz [not null, default: `now()`]
 }
 
+Table sessions {
+  id integer [pk, increment]
+  user_id integer [not null]
+  token_hash text [not null, unique, note: "SHA-256 of the cookie token; the raw token is never stored"]
+  expires_at timestamptz [not null]
+  created_at timestamptz [not null, default: `now()`]
+}
+
+Ref: sessions.user_id > users.id
 Ref: resources.category_id > categories.id
 Ref: reservations.resource_id > resources.id
 Ref: reservations.user_id > users.id

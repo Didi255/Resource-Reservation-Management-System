@@ -158,13 +158,13 @@ Every decision is discussed with me first. The full reasoning goes in
 | 13 | Resource name uniqueness | Unique per category (D9) | Prevents confusing duplicates; DB-enforced |
 | 14 | History table | `reservation_events` (D10) | Usage history, cancellation reasons, real transaction |
 | 15 | Reports | Three SQL reports on admin dashboard (D11) | Usage visibility without a subsystem |
+| 6 | Auth | Hand-rolled login with DB-backed sessions (D14) | Real revocation, no signing to explain, one extra table |
 | 11 | Branching | Feature branches + PR into `main` for code; docs-only changes straight to `main` | Reviewable units, `main` always works; PR ceremony isn't worth it for docs |
 
 ### ❓ Open — discuss in roughly this order
 
 | # | Decision | Notes |
 |---|---|---|
-| 6 | Auth: none / simple custom / Auth.js | Roles matter if admins manage resources and members book them. |
 | 7 | Mutations: Server Actions vs Route Handlers (API routes) | |
 | 8 | Validation library (e.g. Zod) or hand-written | Must validate on the server regardless. |
 | 10 | Time zones: how times are stored and displayed | `timestamptz` vs `timestamp` — a classic bug source. |
