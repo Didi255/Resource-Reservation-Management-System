@@ -48,6 +48,12 @@ body {
   line-height: 1.6;
 }
 
+/* Browsers paint autofilled inputs pale blue or yellow. Delay that so inputs stay white. */
+input:-webkit-autofill {
+  -webkit-text-fill-color: var(--color-ink);
+  transition: background-color 9999s ease-out 0s;
+}
+
 /* ---------- Motion ---------- */
 
 /* Quiet entrance: a short fade and rise, staggered with --i. */
