@@ -9,13 +9,17 @@ export type Resource = {
     conditionNotes: string | null;
     categoryId: number;
     categoryName: string;
+    planX: number | null;
+    planY: number | null;
 };
 
 const SELECT_RESOURCE = `
     SELECT r.id, r.name, r.location, r.description, r.status,
            r.condition_notes AS "conditionNotes",
            r.category_id     AS "categoryId",
-           c.name            AS "categoryName"
+           c.name            AS "categoryName",
+           r.plan_x          AS "planX",
+           r.plan_y          AS "planY"
       FROM resources r
       JOIN categories c ON c.id = r.category_id
 `;
@@ -75,4 +79,34 @@ export async function updateResource(
     );
     if (result.rowCount === 0) return null;
     return getResource(id);
+}
+
+export type Availability = "free" | "booked" | "pending" | "maintenance";
+
+export async function listAvailability(
+    start: string,
+    end: string
+): Promise<(Resource & { availability: Availability })[]> {
+    const result = await pool.query(
+        `SELECT x.*,
+                CASE
+                    WHEN x.status <> 'available' THEN 'maintenance'
+                    WHEN EXISTS (
+                        SELECT 1 FROM reservations v
+                         WHERE v.resource_id = x.id AND v.status = 'approved'
+                           AND v.start_time < $2 AND v.end_time > $1
+                    ) THEN 'booked'
+                    WHEN EXISTS (
+                        SELECT 1 FROM reservations v
+                         WHERE v.resource_id = x.id AND v.status = 'pending'
+                           AND v.start_time < $2 AND v.end_time > $1
+                    ) THEN 'pending'
+                    ELSE 'free'
+                END AS availability
+           FROM (${SELECT_RESOURCE}) x
+          WHERE x.status <> 'retired'
+          ORDER BY x."categoryName", x.name`,
+        [start, end]
+    );
+    return result.rows;
 }

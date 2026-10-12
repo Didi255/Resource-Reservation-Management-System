@@ -12,6 +12,7 @@
     "test:concurrency": "node scripts/concurrency-test.mjs"
   },
   "dependencies": {
+    "@phosphor-icons/react": "^2.1.10",
     "bcryptjs": "^3.0.3",
     "next": "16.4.0",
     "pg": "^8.23.1",
