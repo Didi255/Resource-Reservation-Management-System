@@ -19,6 +19,7 @@ async function Shell({ children }: { children: React.ReactNode }) {
     const items: NavItem[] = [
         { href: "/spaces", label: "Spaces", icon: "plan" },
         { href: "/resources", label: "Resources", icon: "list" },
+        { href: "/bookings", label: "My bookings", icon: "bookings" },
     ];
 
     return (
