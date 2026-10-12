@@ -48,6 +48,26 @@ body {
   line-height: 1.6;
 }
 
+/* Slim scrollbars without the arrow buttons the default Windows ones draw. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-button {
+  display: none;
+}
+*::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 /* Browsers paint autofilled inputs pale blue or yellow. Delay that so inputs stay white. */
 input:-webkit-autofill {
   -webkit-text-fill-color: var(--color-ink);

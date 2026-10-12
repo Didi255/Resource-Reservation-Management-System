@@ -1,6 +1,15 @@
 "use client";
 
-import { CheckCircle, CircleNotch, MapPin, Plus, X } from "@phosphor-icons/react";
+import {
+    Archive,
+    ArrowCounterClockwise,
+    CheckCircle,
+    CircleNotch,
+    MapPin,
+    PencilSimple,
+    Plus,
+    X,
+} from "@phosphor-icons/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PlanPicker } from "@/components/plan-picker";
 import { AVAILABILITY_PILL } from "@/lib/availability";
@@ -95,7 +104,7 @@ export function AdminResources() {
 
     return (
         <div className="mx-auto w-full max-w-5xl space-y-6">
-            <div className="flex flex-wrap items-end justify-between gap-4">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                 <header>
                     <p className="font-mono text-sm uppercase tracking-wider text-muted">Admin</p>
                     <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -109,7 +118,7 @@ export function AdminResources() {
                 <button
                     type="button"
                     onClick={() => setEditing({ mode: "create" })}
-                    className="flex h-11 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-white outline-none transition hover:bg-primary-hover focus-visible:ring-4 focus-visible:ring-primary/30 active:scale-[0.98]"
+                    className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-white outline-none transition hover:bg-primary-hover focus-visible:ring-4 focus-visible:ring-primary/30 active:scale-[0.98] max-sm:w-full"
                 >
                     <Plus size={16} weight="bold" aria-hidden />
                     Add resource
@@ -141,14 +150,17 @@ export function AdminResources() {
             )}
 
             {retiredCount > 0 && (
-                <label className="flex w-fit items-center gap-2 text-sm text-muted">
+                <label className="inline-flex w-fit cursor-pointer items-center gap-2.5 rounded-lg border border-line bg-surface px-3 py-2 text-sm font-medium transition-colors hover:border-ink/25 has-[:checked]:border-primary/40 has-[:checked]:bg-primary-soft has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary/40">
                     <input
                         type="checkbox"
                         checked={showRetired}
                         onChange={(e) => setShowRetired(e.target.checked)}
-                        className="h-4 w-4 accent-[var(--color-primary)]"
+                        className="h-4 w-4 cursor-pointer accent-[var(--color-primary)]"
                     />
-                    Show retired ({retiredCount})
+                    Show retired
+                    <span className="rounded-md bg-maintenance-soft px-1.5 py-0.5 font-mono text-xs text-maintenance-ink">
+                        {retiredCount}
+                    </span>
                 </label>
             )}
 
@@ -169,16 +181,18 @@ export function AdminResources() {
 
             {groups.map(([category, items]) => (
                 <section key={category}>
-                    <h2 className="mb-2 flex items-baseline gap-2 text-base font-semibold tracking-tight">
+                    <h2 className="mb-2.5 flex items-center gap-2 text-base font-semibold tracking-tight">
                         {category}
-                        <span className="font-mono text-xs font-normal text-muted">{items.length}</span>
+                        <span className="rounded-md bg-maintenance-soft px-1.5 py-0.5 font-mono text-xs font-normal text-maintenance-ink">
+                            {items.length}
+                        </span>
                     </h2>
 
                     <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface">
                         {items.map((r) => (
                             <li
                                 key={r.id}
-                                className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
+                                className="flex flex-col gap-3 px-4 py-3 transition-colors hover:bg-background/70 sm:flex-row sm:items-center sm:justify-between"
                             >
                                 <div className="min-w-0">
                                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -196,34 +210,37 @@ export function AdminResources() {
                                             </span>
                                         )}
                                     </div>
-                                    <p className="mt-1 flex items-center gap-1.5 text-sm text-muted">
+                                    <p className="mt-0.5 flex items-center gap-1.5 text-sm text-muted">
                                         <MapPin size={14} className="shrink-0" aria-hidden />
                                         {r.location}
                                     </p>
                                 </div>
 
-                                <div className="flex shrink-0 gap-2 max-sm:w-full">
+                                <div className="grid shrink-0 grid-cols-2 gap-2 sm:flex">
                                     <button
                                         type="button"
                                         onClick={() => setEditing({ mode: "edit", resource: r })}
-                                        className="h-10 rounded-lg border border-line px-3.5 text-sm font-medium outline-none transition hover:bg-background focus-visible:ring-2 focus-visible:ring-primary/40 max-sm:flex-1"
+                                        className="flex h-9 items-center justify-center gap-1.5 rounded-lg border border-line bg-surface px-3 text-sm font-medium outline-none transition hover:border-ink/25 hover:bg-background focus-visible:ring-2 focus-visible:ring-primary/40 active:scale-[0.98]"
                                     >
+                                        <PencilSimple size={16} aria-hidden />
                                         Edit
                                     </button>
                                     {r.status === "retired" ? (
                                         <button
                                             type="button"
                                             onClick={() => restore(r)}
-                                            className="h-10 rounded-lg border border-line px-3.5 text-sm font-medium outline-none transition hover:bg-background focus-visible:ring-2 focus-visible:ring-primary/40 max-sm:flex-1"
+                                            className="flex h-9 items-center justify-center gap-1.5 rounded-lg border border-line bg-surface px-3 text-sm font-medium text-primary outline-none transition hover:border-primary/40 hover:bg-primary-soft focus-visible:ring-2 focus-visible:ring-primary/40 active:scale-[0.98]"
                                         >
+                                            <ArrowCounterClockwise size={16} aria-hidden />
                                             Restore
                                         </button>
                                     ) : (
                                         <button
                                             type="button"
                                             onClick={() => setRetiring(r)}
-                                            className="h-10 rounded-lg border border-line px-3.5 text-sm font-medium outline-none transition hover:border-booked/40 hover:bg-booked-soft hover:text-booked-ink focus-visible:ring-2 focus-visible:ring-primary/40 max-sm:flex-1"
+                                            className="flex h-9 items-center justify-center gap-1.5 rounded-lg border border-line bg-surface px-3 text-sm font-medium text-muted outline-none transition hover:border-booked/30 hover:bg-booked-soft hover:text-booked-ink focus-visible:ring-2 focus-visible:ring-primary/40 active:scale-[0.98]"
                                         >
+                                            <Archive size={16} aria-hidden />
                                             Retire
                                         </button>
                                     )}

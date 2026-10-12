@@ -111,12 +111,14 @@
 - **Trade-off accepted:** one more table and one query per request. Known limitations, stated in the README: no rate limiting, no email verification, no password reset.
 
 
-## D15: Teams deferred to a should-have after the core flow
+## D15: Teams deferred, then dropped
 - **Date:** 2026-10-12
 - **Options considered:** leave out / `teams` table with a nullable `users.team_id`, built after the core flow / many-to-many users-teams with "booking as" a team now.
 - **Chosen:** `teams` plus `users.team_id` as migration 008 (007 is now used for floor-plan positions, D21) after the core booking flow works; until then a team booking is a member booking on the team's behalf.
 - **Why:** The brief says resources are used by "individuals and teams", so usage by team is worth showing. The change is additive (one table, one nullable column), so deciding later costs no rework, and the core flow protects against the three stated problems.
 - **Trade-off accepted:** if time runs out it stays a documented limitation. Members belong to at most one team.
+- **Outcome (2026-10-13): dropped.** It was built (a `teams` table, a team on each reservation, an admin page and a by-team report) and then removed before merging. Teams only label a booking for reporting; they change nothing about availability or double booking, which are what the brief is about. Shared and open spaces are better served by "free means anyone may use it" than by a team concept. Keeping it would add a table, two columns, three routes and a screen to explain and test for no change in the problems solved.
+- **What this leaves:** a booking belongs to the person who requested it. If team usage is wanted later, it is still additive: one table and one nullable column.
 
 
 ## D16: Zod for request validation
@@ -167,3 +169,12 @@
 - **Chosen:** migration 007 adds `plan_x` and `plan_y` (SMALLINT, 0 to 100) to `resources`, with a check that both are set or both are empty.
 - **Why:** Each resource has at most one position on one plan, so a second table adds a join for no benefit. Percentages stay valid at any image size, and the CHECK constraints stop half-placed pins at the database.
 - **Trade-off accepted:** one floor only; a multi-floor plan would need a `floor` column or a table.
+
+
+
+## D22: Resources are retired, not deleted
+- **Date:** 2026-10-13
+- **Options considered:** hard delete / a boolean `active` flag / the existing `status` column with a `retired` value.
+- **Chosen:** "Remove" in the admin screen sets `status = 'retired'`. Retired resources are hidden from availability, the plan and the list, and can be restored.
+- **Why:** Reservations reference resources with `ON DELETE RESTRICT`, so deleting a used resource would either fail or erase booking history that reports depend on. D13 already put availability in `status`, so no new column is needed.
+- **Trade-off accepted:** retired resources stay in the table forever. Bookings that already exist for a retired resource are not cancelled automatically; the admin handles them from Approvals.
