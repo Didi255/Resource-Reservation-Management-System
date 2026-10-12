@@ -1,31 +1,87 @@
 @import "tailwindcss";
 
 /*
- * Design tokens (D17). Light theme only.
- * Tailwind turns each --color-* into utilities: bg-surface, text-ink, border-line, ...
- * Colour is reserved for meaning: blue = action, green/red/amber/grey = availability.
+ * Design tokens (D17, refined). Light theme only.
+ * One accent (blue). Everything else is neutral; colour is reserved for meaning:
+ * availability states use soft fills with a darker ink for the text.
  */
 @theme {
-  --color-background: #f4f7fe;
+  --color-background: #f8fafc;
   --color-surface: #ffffff;
-  --color-ink: #0b1b3a;
-  --color-muted: #5b6b8c;
-  --color-line: #e1e8f5;
+  --color-ink: #0f172a;
+  --color-muted: #64748b;
+  --color-line: #e2e8f0;
 
-  --color-primary: #2563ff;
-  --color-primary-hover: #1d4fd8;
-  --color-glow: #38bdf8;
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-primary-soft: #eff6ff;
 
-  --color-free: #12b76a;
-  --color-booked: #f04438;
-  --color-pending: #f79009;
-  --color-maintenance: #98a2b3;
+  /* availability: solid (pins, dots) */
+  --color-free: #16a34a;
+  --color-booked: #dc2626;
+  --color-pending: #d97706;
+  --color-maintenance: #94a3b8;
 
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  /* availability: soft fill + ink (badges, summary tiles) */
+  --color-free-soft: #ecfdf3;
+  --color-free-ink: #166534;
+  --color-booked-soft: #fef2f2;
+  --color-booked-ink: #991b1b;
+  --color-pending-soft: #fffbeb;
+  --color-pending-ink: #92400e;
+  --color-maintenance-soft: #f1f5f9;
+  --color-maintenance-ink: #475569;
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", monospace;
 }
 
 body {
   background: var(--color-background);
   color: var(--color-ink);
   font-family: var(--font-sans);
+  line-height: 1.6;
+}
+
+/* ---------- Motion ---------- */
+
+/* Quiet entrance: a short fade and rise, staggered with --i. */
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.reveal {
+  animation: reveal 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--i, 0) * 50ms);
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton {
+  border-radius: 12px;
+  border: 1px solid var(--color-line);
+  background: linear-gradient(90deg, #fff 30%, #f1f5f9 50%, #fff 70%);
+  background-size: 200% 100%;
+  animation: shimmer 1.8s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .skeleton {
+    animation: none;
+  }
 }
