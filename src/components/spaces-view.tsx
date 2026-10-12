@@ -135,13 +135,13 @@ export function SpacesView({ mode }: { mode: "plan" | "list" }) {
             <div
                 className={
                     isPlan
-                        ? "grid items-end gap-4 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-5 xl:grid-cols-[minmax(0,3fr)_minmax(300px,1fr)]"
+                        ? "grid items-center gap-4 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-5 xl:grid-cols-[minmax(0,3fr)_minmax(300px,1fr)]"
                         : "flex flex-col gap-4"
                 }
             >
                 <header>
-                    <p className="font-mono text-xs uppercase tracking-wider text-muted">Availability</p>
-                    <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
+                    <p className="font-mono text-sm uppercase tracking-wider text-muted">Availability</p>
+                    <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl xl:text-5xl">
                         {isPlan ? (
                             <>
                                 Find your <span className="text-primary">space</span>
@@ -152,7 +152,7 @@ export function SpacesView({ mode }: { mode: "plan" | "list" }) {
                             </>
                         )}
                     </h1>
-                    <p className="mt-1 max-w-[65ch] text-muted">
+                    <p className="mt-2 max-w-[65ch] text-base text-muted sm:text-lg">
                         {isPlan
                             ? "Choose a date and time, then pick a pin on the floor plan."
                             : "Choose a date and time to see every resource by category."}
@@ -203,7 +203,6 @@ export function SpacesView({ mode }: { mode: "plan" | "list" }) {
                     <FloorPlan spaces={placed} selectedId={selectedId} onSelect={setSelectedId} />
 
                     <div className="space-y-4 lg:sticky lg:top-6 lg:max-h-[calc(100dvh-3rem)] lg:overflow-y-auto">
-                        <AvailabilitySummary counts={counts} windowLabel={windowLabel} layout="grid" />
                         <ResourceDetail
                             space={selectedSpace}
                             windowLabel={windowLabel}
