@@ -7,6 +7,10 @@ floor plan, request a time, and an admin approves or rejects it.
 Built for the PrimeWave Lab Software Engineering Internship assessment with Next.js (App Router),
 TypeScript and PostgreSQL.
 
+**[Watch the demo video (about 4 minutes)](https://youtu.be/v9bT7-5eBdk)**
+&nbsp;&middot;&nbsp; [ER diagram](https://dbdiagram.io/d/Resource-Management-Sysytem-Database-Diagram-6acc45e327cfb7f1bcda3ba9)
+&nbsp;&middot;&nbsp; [Decision log](docs/DECISIONS.md)
+
 ## The idea in one minute
 
 The brief names three pains: scheduling confusion, overlapping reservations, and uncertainty about

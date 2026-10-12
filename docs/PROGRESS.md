@@ -7,7 +7,9 @@
 - **Proof:** `npm run test:concurrency` PASSES: 50 parallel approvals -> 1x200, 49x409, one approved row, no 5xx (`docs/concurrency-proof.png`). `db/tests/overlap.sql` checks the constraint in plain SQL.
 - **Demo data:** `npm run seed` (base) then `npm run seed:demo` (about 40 reservations, six extra members). Demo resets reservations.
 - **Bug found and fixed on the way:** the utilisation report counted unbooked resources as fully booked, because `LEAST`/`GREATEST` ignore NULLs on a LEFT JOIN. Found by checking the numbers against raw data.
-- **Next action:** fresh-clone test (clone into a new folder, follow the README exactly), then record the demo video.
+- **Demo video:** https://youtu.be/v9bT7-5eBdk (recorded, uploaded, linked from the README).
+- **Fresh-clone test:** passed (clone, install, migrate, seed, seed:demo, dev, lint, tsc, concurrency test).
+- **Next action:** final repo check, then submit the Google Form with the same email as the CV.
 - **Still to do:** update the ER diagram on dbdiagram.io from `docs/er-diagram.dbml` (now includes `plan_x`/`plan_y`, `retired`), demo video (3-5 minutes), submit the Google Form with the same email as the CV.
 - **ER diagram:** https://dbdiagram.io/d/Resource-Management-Sysytem-Database-Diagram-6acc45e327cfb7f1bcda3ba9 (source `docs/er-diagram.dbml`)
 - **Known limitations:** listed in the README.
