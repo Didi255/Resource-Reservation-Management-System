@@ -59,5 +59,25 @@ await client.query(
      DO UPDATE SET location = EXCLUDED.location, description = EXCLUDED.description`
 );
 
+// Pin positions on public/floorplan.webp, in percent of image width/height (D18).
+await client.query(
+    `UPDATE resources r
+        SET plan_x = v.x, plan_y = v.y
+       FROM (VALUES
+              ('Boardroom',         26, 26),
+              ('Conference Room A', 51, 23),
+              ('Huddle Room',       66, 29),
+              ('Training Room',     14, 60),
+              ('Recording Studio',  83, 43),
+              ('Innovation Lab',    77, 66),
+              ('Hot Desk 1',        57, 63),
+              ('Hot Desk 2',        47, 43),
+              ('Hot Desk 3',        34, 60),
+              ('Focus Pod 1',       42, 84),
+              ('Focus Pod 2',       57, 84)
+            ) AS v(name, x, y)
+      WHERE r.name = v.name`
+);
+
 console.log("seeded");
 await client.end();
