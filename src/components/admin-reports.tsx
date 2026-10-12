@@ -104,7 +104,8 @@ export function AdminReports() {
             requests,
             approved,
             hours: Math.round(hours * 10) / 10,
-            average: Math.round(average * 10) / 10,
+            // two decimals: with few bookings the average is a small number, and 0 would hide it
+            average: Math.round(average * 100) / 100,
         };
     }, [report]);
 
@@ -201,10 +202,15 @@ export function AdminReports() {
                 <>
                     {/* Summary */}
                     <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-                        <Metric label="Requests" value={String(summary.requests)} hint="starting in this range" />
-                        <Metric label="Approved" value={String(summary.approved)} hint="of those requests" />
-                        <Metric label="Booked hours" value={String(summary.hours)} hint="approved time in range" />
-                        <Metric label="Avg. utilisation" value={`${summary.average}%`} hint="across all resources" />
+                        <Metric tone="amber" label="Requests" value={String(summary.requests)} hint="starting in this range" />
+                        <Metric tone="green" label="Approved" value={String(summary.approved)} hint="of those requests" />
+                        <Metric tone="blue" label="Booked hours" value={String(summary.hours)} hint="approved time in range" />
+                        <Metric
+                            tone="slate"
+                            label="Avg. utilisation"
+                            value={`${summary.average}%`}
+                            hint="across all resources"
+                        />
                     </dl>
 
                     {/* Tabs: one report at a time */}
@@ -425,12 +431,30 @@ export function AdminReports() {
     );
 }
 
-function Metric({ label, value, hint }: { label: string; value: string; hint: string }) {
+// Soft tints that reuse the status colours: amber = requested, green = approved.
+const TONES = {
+    amber: "border-pending-ink/15 bg-pending-soft text-pending-ink",
+    green: "border-free-ink/15 bg-free-soft text-free-ink",
+    blue: "border-primary/15 bg-primary-soft text-primary-hover",
+    slate: "border-maintenance-ink/15 bg-maintenance-soft text-maintenance-ink",
+} as const;
+
+function Metric({
+    label,
+    value,
+    hint,
+    tone,
+}: {
+    label: string;
+    value: string;
+    hint: string;
+    tone: keyof typeof TONES;
+}) {
     return (
-        <div className="rounded-xl border border-line bg-surface p-4">
-            <dt className="text-xs font-medium uppercase tracking-wider text-muted">{label}</dt>
+        <div className={`rounded-xl border p-4 ${TONES[tone]}`}>
+            <dt className="text-xs font-medium uppercase tracking-wider opacity-80">{label}</dt>
             <dd className="mt-2 font-mono text-3xl font-semibold leading-none tracking-tight">{value}</dd>
-            <p className="mt-2 text-xs text-muted">{hint}</p>
+            <p className="mt-2 text-xs opacity-80">{hint}</p>
         </div>
     );
 }
