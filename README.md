@@ -173,6 +173,21 @@ Every significant choice is written down with the options considered and the tra
 The problem interpretation and scope tiers are in [docs/PROBLEM.md](docs/PROBLEM.md), and the ER
 diagram source is [docs/er-diagram.dbml](docs/er-diagram.dbml).
 
+## Database
+
+![Entity relationship diagram: users, categories, resources, reservations, reservation events and sessions](docs/er-diagram.png)
+
+Interactive version: <https://dbdiagram.io/d/Resource-Management-Sysytem-Database-Diagram-6acc45e327cfb7f1bcda3ba9>
+(source: [docs/er-diagram.dbml](docs/er-diagram.dbml)).
+
+Two rules live in the database and cannot be drawn as lines, so they are noted here:
+
+- **No overlapping approved reservations.** `reservations` has
+  `EXCLUDE USING gist (resource_id WITH =, tstzrange(start_time, end_time) WITH &&) WHERE (status = 'approved')`
+  (see `db/migrations/004_reservations.sql`).
+- **CHECK constraints** keep enumerated values valid (`role`, `status`, `event_type`), force
+  `end_time > start_time`, and keep `plan_x` / `plan_y` within 0 to 100 and set together.
+
 ## Known limitations
 
 Stated plainly, because they are choices and not oversights:
