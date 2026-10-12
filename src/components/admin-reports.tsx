@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { Donut, Heatmap, Legend, StackedBar, type Segment } from "@/components/report-charts";
 
 type Report = {
     utilisation: {
@@ -14,10 +15,22 @@ type Report = {
     byCategory: { category: string; pending: number; approved: number; rejected: number; cancelled: number }[];
     byHour: { hour: number; bookings: number }[];
     byWeekday: { weekday: number; bookings: number }[];
+    heatmap: { weekday: number; hour: number; bookings: number }[];
 };
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const WEEKDAYS_LONG = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+// One muted colour per category. Order follows the alphabetical category list.
+const PALETTE = ["#2563eb", "#0d9488", "#7c3aed", "#d97706", "#db2777", "#64748b", "#0891b2", "#65a30d"];
+
+// The same colours the rest of the app uses for these statuses.
+const STATUS_COLOR = {
+    pending: "#d97706",
+    approved: "#16a34a",
+    rejected: "#dc2626",
+    cancelled: "#94a3b8",
+} as const;
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const toInput = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -60,6 +73,7 @@ export function AdminReports() {
     const [report, setReport] = useState<Report | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [tab, setTab] = useState<TabKey>("utilisation");
+    const [showAll, setShowAll] = useState(false);
 
     const from = range?.from;
     const to = range?.to;
@@ -89,8 +103,12 @@ export function AdminReports() {
     }, [from, to]);
 
     // Everything below is derived from the report, never hardcoded.
-    const summary = useMemo(() => {
+    const derived = useMemo(() => {
         if (!report) return null;
+
+        const categories = report.byCategory.map((c) => c.category);
+        const colorOf = (category: string) => PALETTE[Math.max(0, categories.indexOf(category)) % PALETTE.length];
+
         const requests = report.byCategory.reduce(
             (sum, c) => sum + c.pending + c.approved + c.rejected + c.cancelled,
             0
@@ -100,24 +118,54 @@ export function AdminReports() {
         const average = report.utilisation.length
             ? report.utilisation.reduce((sum, u) => sum + u.utilisation, 0) / report.utilisation.length
             : 0;
+
+        const hoursByCategory: Segment[] = categories.map((category) => ({
+            label: category,
+            value: Math.round(
+                report.utilisation.filter((u) => u.category === category).reduce((s, u) => s + u.hours, 0) * 10
+            ) / 10,
+            color: colorOf(category),
+        }));
+
+        const statusMix: Segment[] = [
+            { label: "Requested", value: report.byCategory.reduce((s, c) => s + c.pending, 0), color: STATUS_COLOR.pending },
+            { label: "Approved", value: approved, color: STATUS_COLOR.approved },
+            { label: "Rejected", value: report.byCategory.reduce((s, c) => s + c.rejected, 0), color: STATUS_COLOR.rejected },
+            { label: "Cancelled", value: report.byCategory.reduce((s, c) => s + c.cancelled, 0), color: STATUS_COLOR.cancelled },
+        ];
+
+        const categoryTotals = report.byCategory.map((c) => c.pending + c.approved + c.rejected + c.cancelled);
+        const busiestCell = report.heatmap.reduce<{ weekday: number; hour: number; bookings: number } | null>(
+            (best, cell) => (!best || cell.bookings > best.bookings ? cell : best),
+            null
+        );
+
         return {
-            requests,
-            approved,
-            hours: Math.round(hours * 10) / 10,
-            // two decimals: with few bookings the average is a small number, and 0 would hide it
-            average: Math.round(average * 100) / 100,
+            colorOf,
+            summary: {
+                requests,
+                approved,
+                hours: Math.round(hours * 10) / 10,
+                // two decimals: with few bookings the average is small, and 0 would hide it
+                average: Math.round(average * 100) / 100,
+            },
+            hoursByCategory,
+            statusMix,
+            maxCategoryTotal: Math.max(0, ...categoryTotals),
+            maxUtil: Math.max(0, ...report.utilisation.map((u) => u.utilisation)),
+            hasBookings: report.byHour.some((h) => h.bookings > 0),
+            busiestCell,
         };
     }, [report]);
 
     if (!range) return null;
 
     const activePreset = presets.find((p) => p.from === range.from && p.to === range.to)?.key ?? null;
-    const maxUtil = Math.max(0, ...(report?.utilisation.map((u) => u.utilisation) ?? [0]));
-    const hasBookings = report !== null && report.byHour.some((h) => h.bookings > 0);
 
     const dateInput =
         "h-11 w-full rounded-lg border border-line bg-surface px-3 font-mono text-sm outline-none transition hover:border-primary/40 focus:border-primary focus:ring-4 focus:ring-primary/15";
     const label = "mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted";
+    const card = "rounded-xl border border-line bg-surface";
 
     return (
         <div className="mx-auto w-full max-w-6xl space-y-6">
@@ -132,7 +180,7 @@ export function AdminReports() {
             </header>
 
             {/* Date range */}
-            <section aria-label="Report range" className="rounded-xl border border-line bg-surface p-4 sm:p-5">
+            <section aria-label="Report range" className={`${card} p-4 sm:p-5`}>
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                     <div className="grid grid-cols-2 gap-3 sm:max-w-md lg:w-[28rem]">
                         <label>
@@ -194,21 +242,20 @@ export function AdminReports() {
                         ))}
                     </div>
                     <div className="skeleton h-[320px]" />
-                    <div className="skeleton h-[220px]" />
                 </div>
             )}
 
-            {report !== null && summary !== null && (
+            {report !== null && derived !== null && (
                 <>
                     {/* Summary */}
                     <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-                        <Metric tone="amber" label="Requests" value={String(summary.requests)} hint="starting in this range" />
-                        <Metric tone="green" label="Approved" value={String(summary.approved)} hint="of those requests" />
-                        <Metric tone="blue" label="Booked hours" value={String(summary.hours)} hint="approved time in range" />
+                        <Metric tone="amber" label="Requests" value={String(derived.summary.requests)} hint="starting in this range" />
+                        <Metric tone="green" label="Approved" value={String(derived.summary.approved)} hint="of those requests" />
+                        <Metric tone="blue" label="Booked hours" value={String(derived.summary.hours)} hint="approved time in range" />
                         <Metric
                             tone="slate"
                             label="Avg. utilisation"
-                            value={`${summary.average}%`}
+                            value={`${derived.summary.average}%`}
                             hint="across all resources"
                         />
                     </dl>
@@ -217,7 +264,7 @@ export function AdminReports() {
                     <div
                         role="tablist"
                         aria-label="Report sections"
-                        className="flex gap-1 overflow-x-auto border-b border-line"
+                        className="flex gap-1 overflow-x-auto overflow-y-hidden border-b border-line [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                     >
                         {TABS.map((t, index) => {
                             const active = tab === t.key;
@@ -232,7 +279,6 @@ export function AdminReports() {
                                     tabIndex={active ? 0 : -1}
                                     onClick={() => setTab(t.key)}
                                     onKeyDown={(e) => {
-                                        // arrow keys move between tabs, as people expect from a tab list
                                         const offset = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
                                         if (!offset) return;
                                         e.preventDefault();
@@ -240,7 +286,7 @@ export function AdminReports() {
                                         setTab(next.key);
                                         document.getElementById(`tab-${next.key}`)?.focus();
                                     }}
-                                    className={`-mb-px shrink-0 whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium outline-none transition-colors focus-visible:rounded-t-md focus-visible:ring-2 focus-visible:ring-primary/40 ${
+                                    className={`shrink-0 whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium outline-none transition-colors focus-visible:rounded-t-md focus-visible:ring-2 focus-visible:ring-primary/40 ${
                                         active
                                             ? "border-primary text-primary"
                                             : "border-transparent text-muted hover:text-ink"
@@ -258,61 +304,133 @@ export function AdminReports() {
                         id="panel-utilisation"
                         aria-labelledby="tab-utilisation"
                         hidden={tab !== "utilisation"}
-                        className="rounded-xl border border-line bg-surface"
+                        className={card}
                     >
-                        <div className="p-4 pb-3 sm:p-5 sm:pb-3">
-                            <h2 className="text-lg font-semibold tracking-tight">Utilisation by resource</h2>
-                            <p className="mt-1 text-sm text-muted">
-                                Approved hours as a share of every hour in the range. Tiers compare each resource
-                                with the busiest one.
-                            </p>
-                        </div>
-
-                        {maxUtil === 0 ? (
-                            <p className="mx-4 mb-4 rounded-lg border border-dashed border-line px-4 py-8 text-center text-sm text-muted sm:mx-5 sm:mb-5">
+                        {derived.maxUtil === 0 ? (
+                            <p className="m-4 rounded-lg border border-dashed border-line px-4 py-10 text-center text-sm text-muted sm:m-5">
                                 No approved bookings overlap this range.
                             </p>
                         ) : (
-                            <ul
-                                tabIndex={0}
-                                aria-label="Utilisation by resource, scrollable"
-                                className="max-h-[30rem] divide-y divide-line overflow-y-auto border-t border-line outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-                            >
-                                {report.utilisation.map((u) => {
-                                    const ratio = u.utilisation / maxUtil;
-                                    const tier = u.utilisation === 0 ? "None" : ratio >= 0.66 ? "High" : ratio >= 0.33 ? "Medium" : "Low";
-                                    return (
-                                        <li key={u.id} className="px-4 py-3 sm:px-5">
-                                            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-4 gap-y-1">
-                                                <p className="min-w-0 truncate text-sm">
-                                                    <span className="font-medium">{u.name}</span>{" "}
-                                                    <span className="text-muted">{u.category}</span>
-                                                </p>
-                                                <p className="flex items-baseline justify-end gap-3 font-mono text-xs text-muted sm:gap-4">
-                                                    <span className="w-16 text-right">{plural(u.bookings, "booking")}</span>
-                                                    <span className="w-12 text-right">{u.hours} h</span>
-                                                    <span className="w-14 text-right text-sm font-semibold text-ink">
-                                                        {u.utilisation}%
-                                                    </span>
-                                                    <span className="hidden w-16 text-right font-sans text-[11px] font-medium uppercase tracking-wider sm:inline">
-                                                        {tier}
-                                                    </span>
-                                                </p>
+                            <>
+                                <div className="grid gap-8 p-4 sm:p-5 lg:grid-cols-[auto_1fr]">
+                                    <div>
+                                        <h2 className="text-lg font-semibold tracking-tight">Booked hours by category</h2>
+                                        <p className="mt-1 text-sm text-muted">Where the approved time goes.</p>
+                                        <div className="mt-4 flex flex-col items-center gap-5 sm:flex-row lg:flex-col lg:items-start">
+                                            <Donut
+                                                segments={derived.hoursByCategory}
+                                                centerValue={String(derived.summary.hours)}
+                                                centerLabel="booked hours"
+                                                ariaLabel={`Booked hours by category, ${derived.summary.hours} hours in total`}
+                                            />
+                                            <div className="w-full min-w-[12rem] sm:w-auto lg:w-full">
+                                                <Legend segments={derived.hoursByCategory} />
                                             </div>
-                                            <div
-                                                className="mt-2 h-2.5 overflow-hidden rounded-full bg-background"
-                                                role="img"
-                                                aria-label={`${u.name}: ${u.utilisation}% utilised, ${tier} compared with the busiest resource`}
-                                            >
-                                                <div
-                                                    className="h-full rounded-full bg-primary transition-[width] duration-500"
-                                                    style={{ width: `${ratio * 100}%` }}
-                                                />
-                                            </div>
-                                        </li>
-                                    );
-                                })}
-                            </ul>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <h2 className="text-lg font-semibold tracking-tight">Busiest resources</h2>
+                                        <p className="mt-1 text-sm text-muted">
+                                            Share of the range each one is booked for.
+                                        </p>
+                                        <ol className="mt-4 space-y-4">
+                                            {report.utilisation
+                                                .filter((u) => u.utilisation > 0)
+                                                .slice(0, 5)
+                                                .map((u, index) => (
+                                                    <li key={u.id}>
+                                                        <div className="flex items-baseline justify-between gap-3">
+                                                            <p className="flex min-w-0 items-baseline gap-2 text-sm">
+                                                                <span className="font-mono text-xs text-muted">
+                                                                    {index + 1}
+                                                                </span>
+                                                                <span className="truncate font-medium">{u.name}</span>
+                                                            </p>
+                                                            <p className="shrink-0 font-mono text-sm font-semibold">
+                                                                {u.utilisation}%
+                                                            </p>
+                                                        </div>
+                                                        <div className="mt-1.5 h-3 overflow-hidden rounded-full bg-background">
+                                                            <div
+                                                                className="h-full rounded-full"
+                                                                style={{
+                                                                    width: `${(u.utilisation / derived.maxUtil) * 100}%`,
+                                                                    backgroundColor: derived.colorOf(u.category),
+                                                                }}
+                                                            />
+                                                        </div>
+                                                        <p className="mt-1 text-xs text-muted">
+                                                            {u.category} · {plural(u.bookings, "booking")} · {u.hours} h
+                                                        </p>
+                                                    </li>
+                                                ))}
+                                        </ol>
+                                    </div>
+                                </div>
+
+                                <div className="border-t border-line">
+                                    <h3 className="px-4 pt-4 text-sm font-semibold sm:px-5">All resources</h3>
+                                    <ul className="mt-2 divide-y divide-line">
+                                        {(showAll ? report.utilisation : report.utilisation.slice(0, 8)).map((u) => {
+                                            const ratio = derived.maxUtil > 0 ? u.utilisation / derived.maxUtil : 0;
+                                            const tier =
+                                                u.utilisation === 0 ? "None" : ratio >= 0.66 ? "High" : ratio >= 0.33 ? "Medium" : "Low";
+                                            return (
+                                                <li key={u.id} className="px-4 py-2.5 sm:px-5">
+                                                    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4">
+                                                        <p className="flex min-w-0 items-center gap-2 text-sm">
+                                                            <span
+                                                                className="h-2.5 w-2.5 shrink-0 rounded-sm"
+                                                                style={{ backgroundColor: derived.colorOf(u.category) }}
+                                                            />
+                                                            <span className="truncate font-medium">{u.name}</span>
+                                                            <span className="hidden truncate text-muted sm:inline">
+                                                                {u.category}
+                                                            </span>
+                                                        </p>
+                                                        <p className="flex items-baseline gap-3 font-mono text-xs text-muted sm:gap-4">
+                                                            <span className="hidden w-20 text-right sm:inline">
+                                                                {plural(u.bookings, "booking")}
+                                                            </span>
+                                                            <span className="w-12 text-right">{u.hours} h</span>
+                                                            <span className="w-14 text-right text-sm font-semibold text-ink">
+                                                                {u.utilisation}%
+                                                            </span>
+                                                            <span className="hidden w-16 text-right font-sans text-[11px] font-medium uppercase tracking-wider sm:inline">
+                                                                {tier}
+                                                            </span>
+                                                        </p>
+                                                    </div>
+                                                    <div
+                                                        className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-background"
+                                                        role="img"
+                                                        aria-label={`${u.name}: ${u.utilisation}% utilised, ${tier} compared with the busiest resource`}
+                                                    >
+                                                        <div
+                                                            className="h-full rounded-full"
+                                                            style={{
+                                                                width: `${ratio * 100}%`,
+                                                                backgroundColor: derived.colorOf(u.category),
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </li>
+                                            );
+                                        })}
+                                    </ul>
+
+                                    {report.utilisation.length > 8 && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowAll((v) => !v)}
+                                            className="m-4 h-10 rounded-lg border border-line px-4 text-sm font-medium outline-none transition hover:bg-background focus-visible:ring-2 focus-visible:ring-primary/40 sm:mx-5"
+                                        >
+                                            {showAll ? "Show fewer" : `Show all ${report.utilisation.length} resources`}
+                                        </button>
+                                    )}
+                                </div>
+                            </>
                         )}
                     </section>
 
@@ -322,15 +440,68 @@ export function AdminReports() {
                         id="panel-requests"
                         aria-labelledby="tab-requests"
                         hidden={tab !== "requests"}
-                        className="rounded-xl border border-line bg-surface"
+                        className={card}
                     >
-                        <div className="p-4 pb-3 sm:p-5 sm:pb-3">
-                            <h2 className="text-lg font-semibold tracking-tight">Requests by category</h2>
-                            <p className="mt-1 text-sm text-muted">Bookings that start inside the range.</p>
+                        <div className="grid gap-8 p-4 sm:p-5 lg:grid-cols-[auto_1fr]">
+                            <div>
+                                <h2 className="text-lg font-semibold tracking-tight">Status mix</h2>
+                                <p className="mt-1 text-sm text-muted">How requests ended up in this range.</p>
+                                <div className="mt-4 flex flex-col items-center gap-5 sm:flex-row lg:flex-col lg:items-start">
+                                    <Donut
+                                        segments={derived.statusMix}
+                                        centerValue={String(derived.summary.requests)}
+                                        centerLabel="requests"
+                                        ariaLabel={`Requests by status, ${derived.summary.requests} in total`}
+                                    />
+                                    <div className="w-full min-w-[12rem] sm:w-auto lg:w-full">
+                                        <Legend segments={derived.statusMix} />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h2 className="text-lg font-semibold tracking-tight">By category</h2>
+                                <p className="mt-1 text-sm text-muted">
+                                    Bar length compares categories. Colours show how each request ended.
+                                </p>
+                                <ul className="mt-4 space-y-4">
+                                    {report.byCategory.map((c) => {
+                                        const total = c.pending + c.approved + c.rejected + c.cancelled;
+                                        return (
+                                            <li key={c.category}>
+                                                <div className="flex items-baseline justify-between gap-3 text-sm">
+                                                    <span className="flex items-center gap-2 font-medium">
+                                                        <span
+                                                            className="h-2.5 w-2.5 rounded-sm"
+                                                            style={{ backgroundColor: derived.colorOf(c.category) }}
+                                                        />
+                                                        {c.category}
+                                                    </span>
+                                                    <span className="font-mono text-xs text-muted">
+                                                        {plural(total, "request")}
+                                                    </span>
+                                                </div>
+                                                <div className="mt-1.5">
+                                                    <StackedBar
+                                                        scale={derived.maxCategoryTotal}
+                                                        segments={[
+                                                            { label: "Requested", value: c.pending, color: STATUS_COLOR.pending },
+                                                            { label: "Approved", value: c.approved, color: STATUS_COLOR.approved },
+                                                            { label: "Rejected", value: c.rejected, color: STATUS_COLOR.rejected },
+                                                            { label: "Cancelled", value: c.cancelled, color: STATUS_COLOR.cancelled },
+                                                        ]}
+                                                    />
+                                                </div>
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
+                            </div>
                         </div>
 
                         <div className="overflow-x-auto border-t border-line">
                             <table className="w-full min-w-[520px] text-sm">
+                                <caption className="sr-only">Requests by category and status</caption>
                                 <thead className="bg-background text-left text-xs uppercase tracking-wider text-muted">
                                     <tr>
                                         <th scope="col" className="px-4 py-2.5 font-medium sm:px-5">
@@ -387,41 +558,61 @@ export function AdminReports() {
                         id="panel-peak"
                         aria-labelledby="tab-peak"
                         hidden={tab !== "peak"}
-                        className="rounded-xl border border-line bg-surface p-4 sm:p-5"
+                        className={`${card} p-4 sm:p-5`}
                     >
-                        <h2 className="text-lg font-semibold tracking-tight">Peak times</h2>
-                        <p className="mt-1 text-sm text-muted">
-                            Approved bookings by start time, in your timezone. The busiest bar is darker.
-                        </p>
-
-                        {!hasBookings ? (
-                            <p className="mt-4 rounded-lg border border-dashed border-line px-4 py-10 text-center text-sm text-muted">
+                        {!derived.hasBookings ? (
+                            <p className="rounded-lg border border-dashed border-line px-4 py-10 text-center text-sm text-muted">
                                 No approved bookings start in this range.
                             </p>
                         ) : (
-                            <div className="mt-6 grid gap-8 lg:grid-cols-[3fr_2fr]">
-                                <BarChart
-                                    title="By hour of day"
-                                    ariaLabel="Approved bookings by start hour"
-                                    items={report.byHour.map((h) => ({
-                                        label: pad(h.hour),
-                                        tickLabel: h.hour % 3 === 0 ? pad(h.hour) : "",
-                                        value: h.bookings,
-                                        tooltip: `${pad(h.hour)}:00 to ${pad((h.hour + 1) % 24)}:00`,
-                                    }))}
-                                    peakText={(item) => `Busiest hour: ${item.tooltip}`}
-                                />
-                                <BarChart
-                                    title="By weekday"
-                                    ariaLabel="Approved bookings by weekday"
-                                    items={report.byWeekday.map((d) => ({
-                                        label: WEEKDAYS[d.weekday - 1],
-                                        tickLabel: WEEKDAYS[d.weekday - 1],
-                                        value: d.bookings,
-                                        tooltip: WEEKDAYS_LONG[d.weekday - 1],
-                                    }))}
-                                    peakText={(item) => `Busiest day: ${item.tooltip}`}
-                                />
+                            <div className="space-y-8">
+                                <div>
+                                    <div className="flex flex-wrap items-baseline justify-between gap-x-4">
+                                        <div>
+                                            <h2 className="text-lg font-semibold tracking-tight">When demand peaks</h2>
+                                            <p className="mt-1 text-sm text-muted">
+                                                Approved bookings by weekday and start hour, in your timezone.
+                                            </p>
+                                        </div>
+                                        {derived.busiestCell && (
+                                            <p className="rounded-md bg-primary-soft px-2.5 py-1 text-xs font-medium text-primary-hover">
+                                                Busiest: {WEEKDAYS_LONG[derived.busiestCell.weekday - 1]},{" "}
+                                                {pad(derived.busiestCell.hour)}:00 (
+                                                {plural(derived.busiestCell.bookings, "booking")})
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div className="mt-4 overflow-x-auto pb-1">
+                                        <div className="min-w-[560px]">
+                                            <Heatmap cells={report.heatmap} weekdayLabels={WEEKDAYS} />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="grid gap-8 border-t border-line pt-6 lg:grid-cols-[3fr_2fr]">
+                                    <BarChart
+                                        title="By hour of day"
+                                        ariaLabel="Approved bookings by start hour"
+                                        items={report.byHour.map((h) => ({
+                                            label: pad(h.hour),
+                                            tickLabel: h.hour % 3 === 0 ? pad(h.hour) : "",
+                                            value: h.bookings,
+                                            tooltip: `${pad(h.hour)}:00 to ${pad((h.hour + 1) % 24)}:00`,
+                                        }))}
+                                        peakText={(item) => `Busiest hour: ${item.tooltip}`}
+                                    />
+                                    <BarChart
+                                        title="By weekday"
+                                        ariaLabel="Approved bookings by weekday"
+                                        items={report.byWeekday.map((d) => ({
+                                            label: WEEKDAYS[d.weekday - 1],
+                                            tickLabel: WEEKDAYS[d.weekday - 1],
+                                            value: d.bookings,
+                                            tooltip: WEEKDAYS_LONG[d.weekday - 1],
+                                        }))}
+                                        peakText={(item) => `Busiest day: ${item.tooltip}`}
+                                    />
+                                </div>
                             </div>
                         )}
                     </section>
@@ -490,19 +681,16 @@ function BarChart({
             </figcaption>
 
             <div className="relative h-44 pl-8" role="group" aria-label={ariaLabel}>
-                {/* y axis: top, middle, zero */}
                 <span className="absolute left-0 top-0 -translate-y-1/2 font-mono text-[10px] text-muted">{max}</span>
                 <span className="absolute left-0 top-1/2 -translate-y-1/2 font-mono text-[10px] text-muted">{mid}</span>
                 <span className="absolute bottom-0 left-0 translate-y-1/2 font-mono text-[10px] text-muted">0</span>
 
-                {/* gridlines */}
                 <div className="pointer-events-none absolute inset-y-0 left-8 right-0">
                     <div className="absolute inset-x-0 top-0 border-t border-line" />
                     <div className="absolute inset-x-0 top-1/2 border-t border-dashed border-line" />
                     <div className="absolute inset-x-0 bottom-0 border-t border-line" />
                 </div>
 
-                {/* bars */}
                 <div className="relative flex h-full items-end gap-1">
                     {items.map((item, index) => (
                         <div
@@ -531,7 +719,6 @@ function BarChart({
                 </div>
             </div>
 
-            {/* x axis labels */}
             <div className="mt-2 flex gap-1 pl-8 font-mono text-[11px] text-muted">
                 {items.map((item) => (
                     <span key={item.label} className="flex-1 text-center">
