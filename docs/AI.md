@@ -217,9 +217,13 @@ This is the shape of the road, not the status. Status lives in `PROGRESS.md`.
 
 ## Gotchas That Have Bitten Me
 
-1. **`D:\projects` is itself a git repo (cs_ehr).** Any folder inside it without its own
-   `.git` silently uses the parent's repo. Always check `git rev-parse --show-toplevel`
-   prints *this* project's folder before committing.
+1. **Cache Components blocks request-time reads.** `next.config.ts` has `cacheComponents: true`,
+   so reading `cookies()` at the top level of a layout or page is a build error. Put the read
+   in a small async component wrapped in `<Suspense>`.
+2. **Don't paste SQL into PowerShell.** Send it to Postgres:
+   `docker compose exec db psql -U <user> -d <db> -c "..."`.
+3. **`+` in a URL query is a space.** Use `Z` times, or encode `+` as `%2B`.
+4. **Placeholders like `<id>` in a command are redirection operators in PowerShell.** Type the real value.
 
 ## Things That Will Bite Me Later
 
