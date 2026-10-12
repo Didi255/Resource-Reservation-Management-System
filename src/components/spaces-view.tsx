@@ -17,6 +17,10 @@ const shortTime = (iso: string) =>
 
 const subscribeNever = () => () => {};
 
+// One grid for the header and the body, so the time panel sits exactly over the side column.
+const COLUMNS =
+    "lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-5 xl:grid-cols-[minmax(0,3fr)_minmax(300px,1fr)]";
+
 /** "plan" is the floor plan (Spaces); "list" is browse-by-category (Resources). */
 export function SpacesView({ mode }: { mode: "plan" | "list" }) {
     // false while rendering on the server, true in the browser. "Now" only exists
@@ -70,16 +74,11 @@ export function SpacesView({ mode }: { mode: "plan" | "list" }) {
         return [...map.entries()];
     }, [rows]);
 
-    // The summary counts what the page shows: pinned resources on the plan, everything on the list.
     const counts = useMemo(() => {
         const result: Record<Availability, number> = { free: 0, pending: 0, booked: 0, maintenance: 0 };
-        for (const row of rows) {
-            const onPlan = row.planX !== null && row.planY !== null;
-            if (mode === "plan" && !onPlan) continue;
-            result[row.availability]++;
-        }
+        for (const row of rows) result[row.availability]++;
         return result;
-    }, [rows, mode]);
+    }, [rows]);
 
     const active = selected === undefined ? (groups[0]?.[0] ?? null) : selected;
     const activeSpaces = groups.find(([name]) => name === active)?.[1] ?? [];
@@ -100,7 +99,21 @@ export function SpacesView({ mode }: { mode: "plan" | "list" }) {
     const loading = !loaded && error === null;
     const isPlan = mode === "plan";
 
-    // List page: the open category's resources, and the chosen resource's details and booking form
+    const detail = (
+        <ResourceDetail
+            space={selectedSpace}
+            windowLabel={windowLabel}
+            range={range}
+            onBooked={refresh}
+            emptyHint={
+                isPlan
+                    ? "Select a space on the floor plan to view details."
+                    : "Select a resource to view its details and request a booking."
+            }
+        />
+    );
+
+    // List page: the open category's resources. On phones the details open right under them.
     const panel = active && (
         <section
             key={active}
@@ -117,28 +130,14 @@ export function SpacesView({ mode }: { mode: "plan" | "list" }) {
             <ResourceGrid spaces={activeSpaces} selectedId={selectedId} onSelect={setSelectedId} />
 
             {selectedSpace && selectedSpace.categoryName === active && (
-                <ResourceDetail
-                    space={selectedSpace}
-                    windowLabel={windowLabel}
-                    range={range}
-                    onBooked={refresh}
-                />
+                <div className="lg:hidden">{detail}</div>
             )}
         </section>
     );
 
     return (
-        // the plan page uses the full width; the list page keeps a readable column
-        <div className={`mx-auto w-full space-y-5 ${isPlan ? "max-w-[1800px]" : "max-w-6xl space-y-6"}`}>
-            {/* on the plan page the header uses the same columns as the content below, so the
-                time panel sits exactly above the side column and their edges line up */}
-            <div
-                className={
-                    isPlan
-                        ? "grid items-center gap-4 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-5 xl:grid-cols-[minmax(0,3fr)_minmax(300px,1fr)]"
-                        : "flex flex-col gap-4"
-                }
-            >
+        <div className="mx-auto w-full max-w-[1800px] space-y-5">
+            <div className={`grid items-center gap-4 ${COLUMNS}`}>
                 <header>
                     <p className="font-mono text-sm uppercase tracking-wider text-muted">Availability</p>
                     <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl xl:text-5xl">
@@ -159,7 +158,7 @@ export function SpacesView({ mode }: { mode: "plan" | "list" }) {
                     </p>
                 </header>
 
-                <WindowPicker value={window} onChange={setWindow} invalid={range === null} stacked={isPlan} />
+                <WindowPicker value={window} onChange={setWindow} invalid={range === null} stacked />
             </div>
 
             {error && (
@@ -169,25 +168,17 @@ export function SpacesView({ mode }: { mode: "plan" | "list" }) {
             )}
 
             {loading && (
-                <div className="space-y-6" aria-hidden>
+                <div className={`grid gap-5 ${COLUMNS}`} aria-hidden>
                     {isPlan ? (
-                        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,3fr)_minmax(300px,1fr)]">
-                            <div className="skeleton aspect-[1680/944]" />
-                            <div className="space-y-4">
-                                <div className="skeleton h-[180px]" />
-                                <div className="skeleton h-[220px]" />
-                            </div>
-                        </div>
+                        <div className="skeleton aspect-[1680/944]" />
                     ) : (
-                        <>
-                            <div className="skeleton h-[148px]" />
-                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                                {Array.from({ length: 3 }, (_, i) => (
-                                    <div key={i} className="skeleton h-[236px]" />
-                                ))}
-                            </div>
-                        </>
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                            {Array.from({ length: 3 }, (_, i) => (
+                                <div key={i} className="skeleton h-[236px]" />
+                            ))}
+                        </div>
                     )}
+                    <div className="skeleton hidden h-[220px] lg:block" />
                 </div>
             )}
 
@@ -197,36 +188,39 @@ export function SpacesView({ mode }: { mode: "plan" | "list" }) {
                 </p>
             )}
 
-            {loaded && rows.length > 0 && isPlan && (
-                // about 75% plan, 25% sidebar; stacks when the columns would get too narrow
-                <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,3fr)_minmax(300px,1fr)]">
-                    <FloorPlan spaces={placed} selectedId={selectedId} onSelect={setSelectedId} />
+            {loaded && rows.length > 0 && (
+                // about 75% content, 25% side column; stacks when the columns would get too narrow
+                <div className={`grid items-start gap-5 ${COLUMNS}`}>
+                    {isPlan ? (
+                        <FloorPlan spaces={placed} selectedId={selectedId} onSelect={setSelectedId} />
+                    ) : (
+                        <div className="space-y-5">
+                            {/* the side column holds this from lg up; phones show it first instead */}
+                            <div className="lg:hidden">
+                                <AvailabilitySummary counts={counts} windowLabel={windowLabel} />
+                            </div>
 
-                    <div className="space-y-4 lg:sticky lg:top-6 lg:max-h-[calc(100dvh-3rem)] lg:overflow-y-auto">
-                        <ResourceDetail
-                            space={selectedSpace}
-                            windowLabel={windowLabel}
-                            range={range}
-                            onBooked={refresh}
-                        />
+                            <h2 className="text-base font-semibold tracking-tight">Browse by category</h2>
+
+                            <CategoryTabs
+                                groups={groups}
+                                active={active}
+                                onSelect={(name) => setSelected(active === name ? null : name)}
+                            >
+                                {panel}
+                            </CategoryTabs>
+                        </div>
+                    )}
+
+                    <div
+                        className={`space-y-4 lg:sticky lg:top-6 lg:max-h-[calc(100dvh-3rem)] lg:overflow-y-auto ${
+                            isPlan ? "" : "hidden lg:block"
+                        }`}
+                    >
+                        {!isPlan && <AvailabilitySummary counts={counts} windowLabel={windowLabel} />}
+                        {detail}
                     </div>
                 </div>
-            )}
-
-            {loaded && rows.length > 0 && !isPlan && (
-                <>
-                    <AvailabilitySummary counts={counts} windowLabel={windowLabel} />
-
-                    <h2 className="text-base font-semibold tracking-tight">Browse by category</h2>
-
-                    <CategoryTabs
-                        groups={groups}
-                        active={active}
-                        onSelect={(name) => setSelected(active === name ? null : name)}
-                    >
-                        {panel}
-                    </CategoryTabs>
-                </>
             )}
         </div>
     );
