@@ -9,13 +9,17 @@ export type Resource = {
     conditionNotes: string | null;
     categoryId: number;
     categoryName: string;
+    planX: number | null;
+    planY: number | null;
 };
 
 const SELECT_RESOURCE = `
     SELECT r.id, r.name, r.location, r.description, r.status,
            r.condition_notes AS "conditionNotes",
            r.category_id     AS "categoryId",
-           c.name            AS "categoryName"
+           c.name            AS "categoryName",
+           r.plan_x          AS "planX",
+           r.plan_y          AS "planY"
       FROM resources r
       JOIN categories c ON c.id = r.category_id
 `;
