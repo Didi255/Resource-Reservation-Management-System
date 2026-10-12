@@ -98,6 +98,7 @@ plainly** and propose what to cut.
 - **Do NOT write or edit project code.** Guide me on what to write, where, and why.
   Exception: everything in `docs/` (AI.md, PROGRESS.md, DECISIONS.md, PROBLEM.md, README) —
   you write and edit those directly. Documentation is not where I need the practice.
+- **Exception (from 2026-10-12, user's choice):** when the user says "add these" / "move these", place the files exactly as already discussed. Explanations still come first; commits are still the user's.
 - **Do NOT commit, push, branch, or run any git command that changes history.** I do all
   git myself. You may run read-only git (`status`, `log`, `diff`) to check my work.
 - **Do NOT make decisions for me.** For every decision: give me the options, the
